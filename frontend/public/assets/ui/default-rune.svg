@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Default rune">
+  <rect width="120" height="120" fill="#101312"/>
+  <circle cx="60" cy="60" r="40" stroke="#c79b46" stroke-width="8" fill="none"/>
+  <path d="M60 24 V96 M32 60 H88" stroke="#1f6f5f" stroke-width="8" stroke-linecap="round"/>
+</svg>
+

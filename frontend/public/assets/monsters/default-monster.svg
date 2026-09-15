@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" role="img" aria-label="Default monster">
+  <rect width="320" height="240" fill="#101312"/>
+  <path d="M70 180 L120 70 L164 155 L210 70 L260 180 Z" fill="#2b1b1b"/>
+  <circle cx="132" cy="145" r="9" fill="#c79b46"/>
+  <circle cx="194" cy="145" r="9" fill="#c79b46"/>
+</svg>
+

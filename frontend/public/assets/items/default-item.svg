@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Default item">
+  <rect width="120" height="120" rx="10" fill="#101312"/>
+  <path d="M60 18 L94 60 L60 102 L26 60 Z" fill="#1f6f5f"/>
+  <path d="M60 31 L82 60 L60 89 L38 60 Z" fill="#c79b46" opacity=".75"/>
+</svg>
+

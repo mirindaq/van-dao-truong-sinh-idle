@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 420" role="img" aria-label="Default cultivator">
+  <rect width="320" height="420" fill="#101312"/>
+  <circle cx="160" cy="104" r="48" fill="#2b3a34"/>
+  <path d="M92 380 C102 250 118 174 160 174 C202 174 218 250 228 380 Z" fill="#1f6f5f"/>
+  <path d="M130 175 L160 230 L190 175" stroke="#c79b46" stroke-width="8" fill="none"/>
+</svg>
+

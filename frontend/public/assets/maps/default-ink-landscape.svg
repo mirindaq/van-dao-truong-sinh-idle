@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-label="Ink landscape">
+  <rect width="1200" height="700" fill="#111412"/>
+  <path d="M0 490 C160 350 260 380 390 250 C520 120 670 310 800 190 C940 60 1040 240 1200 120 L1200 700 L0 700 Z" fill="#1f2f2a"/>
+  <path d="M0 560 C170 450 310 490 450 390 C610 275 740 470 880 350 C1010 240 1100 360 1200 300 L1200 700 L0 700 Z" fill="#1f6f5f" opacity=".55"/>
+  <circle cx="930" cy="120" r="66" fill="#b9c3cc" opacity=".45"/>
+  <path d="M90 170 C260 120 360 200 520 140 C690 80 820 170 1030 110" stroke="#d9c69a" stroke-width="8" opacity=".16" fill="none"/>
+</svg>
+
