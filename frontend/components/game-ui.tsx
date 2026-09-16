@@ -29,6 +29,11 @@ export function SpiritualRootBadge({ root }: { root: GameState["spiritual_root"]
   return <div className={`root-badge element-${root.elements[0] ?? "wood"}`}><Leaf size={20} /><span><strong>{root.name}</strong><small>{qualityNames[root.quality] ?? root.quality} · {root.elements.map(e => elementNames[e] ?? e).join(" / ")}</small></span></div>;
 }
 
+export function RarityBadge({ rarity = "unknown" }: { rarity?: string }) {
+  const label: Record<string, string> = { common: "Phàm", rare: "Huyền", epic: "Địa", legendary: "Thiên", immortal: "Tiên", unknown: "Chưa định phẩm" };
+  return <span className={`rarity-badge rarity-${rarity}`}>{label[rarity] ?? rarity}</span>;
+}
+
 export function CultivationProgress({ cultivation }: { cultivation: GameState["cultivation"] }) {
   const progress = Math.min(100, Math.max(0, cultivation.current_exp / cultivation.required_exp * 100));
   return <div className="cultivation-progress">

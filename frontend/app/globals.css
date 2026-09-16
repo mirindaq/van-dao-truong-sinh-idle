@@ -166,6 +166,50 @@ svg { flex-shrink: 0; }
 .journal-page .timeline { margin-top: 35px; }
 .journal-page .timeline p { font-size: 14px; }
 .journal-page .timeline li { padding-bottom: 30px; }
+.character-page, .collection-page { max-width: 1100px; }
+.character-hero { display: grid; grid-template-columns: 260px minmax(0, 1fr) 240px; gap: 25px; align-items: stretch; }
+.character-portrait { min-height: 355px; background-size: cover; background-position: center; border: 1px solid var(--line); border-radius: 6px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; position: relative; isolation: isolate; }
+.character-portrait:before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, #10161533, #101615d9); z-index: -1; }
+.character-portrait img { width: 220px; height: auto; filter: drop-shadow(0 15px 24px #0009); }
+.character-profile, .character-stats, .feature-panel, .manual-detail, .equipment-board { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 24px; }
+.character-profile h2 { font-size: 33px; margin: 9px 0 17px; color: var(--gold-bright); }
+.realm-strip { display: inline-flex; align-items: center; gap: 12px; min-height: 37px; padding: 0 13px; border: 1px solid #c3a7734d; color: var(--gold-bright); margin-bottom: 20px; }
+.realm-strip span { color: var(--secondary); font-size: 12px; }
+.profile-actions { display: flex; gap: 11px; flex-wrap: wrap; margin-top: 24px; }
+.character-stats { align-self: start; }
+.feature-grid { display: grid; gap: 24px; margin-top: 24px; }
+.feature-grid.two { grid-template-columns: 1fr 1fr; }
+.manual-card { display: flex; align-items: center; gap: 14px; min-height: 88px; padding: 16px; background: #c3a7730b; border: 1px solid #c3a77330; }
+.manual-card > svg, .manual-emblem, .item-icon, .empty-lore > svg, .equipment-center > svg { color: var(--gold); }
+.manual-card strong { display: block; color: var(--gold-bright); font-weight: 500; }
+.manual-card span { display: block; color: var(--secondary); font-size: 12px; margin-top: 4px; }
+.filter-row { display: flex; gap: 9px; flex-wrap: wrap; margin-bottom: 24px; }
+.filter-pill { min-height: 34px; border: 1px solid var(--line); background: #819c830c; color: var(--secondary); border-radius: 999px; padding: 0 13px; font-size: 11px; }
+.filter-pill.active { color: var(--jade); border-color: #819c8366; background: #819c8318; }
+.filter-pill:disabled { opacity: .55; cursor: not-allowed; }
+.inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+.item-card { min-height: 140px; display: grid; grid-template-columns: 44px 1fr auto; gap: 13px; align-items: start; padding: 17px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.item-icon { width: 42px; height: 42px; display: grid; place-items: center; background: #c3a77312; border: 1px solid #c3a7733b; }
+.item-card strong { display: block; color: var(--gold-bright); font-weight: 500; }
+.item-card span { display: block; color: var(--secondary); font-size: 11px; margin-top: 4px; }
+.item-card b { color: var(--jade); font-weight: 500; font-variant-numeric: tabular-nums; }
+.rarity-badge { display: inline-flex; align-items: center; min-height: 24px; width: fit-content; padding: 0 9px; border: 1px solid var(--line); color: var(--secondary); font-size: 10px; border-radius: 999px; }
+.rarity-rare { color: var(--water); border-color: #6d9ebc66; }
+.rarity-epic { color: var(--rare); border-color: #a78ad066; }
+.rarity-legendary, .rarity-immortal { color: var(--gold-bright); border-color: #c3a77377; }
+.manual-detail { display: grid; grid-template-columns: 95px minmax(0, 1fr); gap: 24px; margin-bottom: 20px; }
+.manual-emblem { width: 95px; min-height: 120px; display: grid; place-items: center; background: linear-gradient(180deg, #c3a77318, #819c8312); border: 1px solid #c3a77344; }
+.manual-detail h2 { margin: 12px 0 10px; color: var(--gold-bright); }
+.manual-detail p { color: var(--secondary); max-width: 620px; margin-bottom: 16px; }
+.equipment-board { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 24px; margin-bottom: 20px; }
+.equipment-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.equipment-slot { min-height: 105px; padding: 15px; border: 1px solid var(--line); background: #819c830a; display: flex; flex-direction: column; justify-content: space-between; }
+.equipment-slot svg { color: var(--muted); }
+.equipment-slot span { color: var(--gold-bright); }
+.equipment-slot small { color: var(--muted); }
+.equipment-center, .empty-lore { min-height: 265px; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; color: var(--secondary); background: #0b100f66; border: 1px dashed #c3a77344; padding: 25px; }
+.empty-lore h2 { margin: 15px 0 9px; color: var(--gold-bright); }
+.empty-lore p { max-width: 390px; margin-bottom: 19px; }
 .locked-page { min-height: 650px; display: flex; align-items: center; justify-content: center; flex-direction: column; background-size: cover; background-position: center; text-align: center; padding: 40px 20px; position: relative; isolation: isolate; }
 .locked-page:before { content: ""; position: absolute; inset: 0; background: #10161599; z-index: -1; }
 .locked-page > svg { color: var(--gold); margin-bottom: 20px; }
@@ -235,7 +279,7 @@ svg { flex-shrink: 0; }
 @keyframes reward-reveal { from { opacity: .3; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (min-width: 1550px) { .cultivation-scene { min-height: 560px; } .cultivator-art { height: 277px; } .cultivator-art img { height: 282px; width: 215px; left: 23px; } }
 @media (max-width: 1190px) { :root { --sidebar: 195px; } .sidebar { padding-inline: 10px; } .home-layout { grid-template-columns: minmax(0, 1fr) 210px; gap: 20px; } .context-column { padding-left: 19px; } #main-content { padding-inline: 24px; } .topbar { padding-inline: 24px; } .cultivation-actions small { max-width: 170px; } .resource-label { display: none; } .opportunity { padding-inline: 12px; } }
-@media (max-width: 980px) { .home-layout { grid-template-columns: minmax(0, 1fr); } .context-column { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 24px 0 0; border-left: 0; border-top: 1px solid var(--line); } .context-column > section + section { border-top: 0; padding-top: 5px; } .recent-section { grid-column: 1 / -1; } .breadcrumb > span:not(.separator) { display: none; } }
+@media (max-width: 980px) { .home-layout, .character-hero { grid-template-columns: minmax(0, 1fr); } .character-stats { align-self: stretch; } .feature-grid.two, .equipment-board { grid-template-columns: 1fr; } .context-column { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 24px 0 0; border-left: 0; border-top: 1px solid var(--line); } .context-column > section + section { border-top: 0; padding-top: 5px; } .recent-section { grid-column: 1 / -1; } .breadcrumb > span:not(.separator) { display: none; } }
 @media (max-width: 760px) {
   :root { --sidebar: 0px; }
   .sidebar, .sidebar-collapsed .sidebar { display: none; }
@@ -281,10 +325,16 @@ svg { flex-shrink: 0; }
   .opening h1 { font-size: 43px; }
   .opening-content { max-width: 370px; }
   .locked-page { min-height: 68dvh; margin-inline: -18px; }
+  .character-portrait { min-height: 315px; }
+  .character-profile, .character-stats, .feature-panel, .manual-detail, .equipment-board { padding: 18px; }
+  .character-profile h2 { font-size: 28px; }
+  .equipment-slots { grid-template-columns: 1fr 1fr; }
+  .manual-detail { grid-template-columns: 1fr; }
+  .manual-emblem { width: 100%; min-height: 95px; }
   .cultivation-details { gap: 18px; }
   .cultivation-details > div + div { padding-left: 18px; }
   .cultivation-details .section-heading h2 { font-size: 17px; }
 }
-@media (max-width: 380px) { .activity-tag { display: none; } .cultivation-actions > .primary-button { width: 100%; } .opportunity-grid { grid-template-columns: 1fr; } .opportunity { min-height: 110px; } .opportunity p { min-height: 0; } .context-column, .cultivation-details { grid-template-columns: 1fr; } .cultivation-details > div + div { border-left: 0; padding-left: 0; } .progress-meta { align-items: flex-start; flex-direction: column; gap: 5px; } }
+@media (max-width: 380px) { .activity-tag { display: none; } .cultivation-actions > .primary-button { width: 100%; } .opportunity-grid, .equipment-slots { grid-template-columns: 1fr; } .opportunity { min-height: 110px; } .opportunity p { min-height: 0; } .context-column, .cultivation-details { grid-template-columns: 1fr; } .cultivation-details > div + div { border-left: 0; padding-left: 0; } .progress-meta { align-items: flex-start; flex-direction: column; gap: 5px; } }
 @media (prefers-reduced-motion: reduce) { *, *:before, *:after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *:before, html[data-reduce-motion="true"] *:after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
