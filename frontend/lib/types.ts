@@ -28,6 +28,8 @@ export type GameState = {
     rate_per_minute: number;
     seconds_until_next_stage: number | null;
     last_cultivation_at: string;
+    base_rate_per_minute: number;
+    root_bonus_per_minute: number;
   };
   active_pet: string | null;
   dao_partner: string | null;
@@ -37,5 +39,26 @@ export type GameState = {
     message: string;
     created_at: string;
   }>;
+  server_time: string;
+  offline_report: { id: number; elapsed_seconds: number; earned_exp: number } | null;
+  breakthrough: BreakthroughPreview;
 };
 
+export type Realm = GameState["realm"];
+export type BreakthroughPreview = {
+  available: boolean;
+  target: Realm | null;
+  required_exp: number;
+  base_chance: number;
+  root_bonus: number;
+  final_chance: number;
+  failure_loss: number;
+  revision: string;
+};
+
+export type BreakthroughResult = {
+  success: boolean;
+  message: string;
+  cultivation_lost: number;
+  realm: Realm;
+};

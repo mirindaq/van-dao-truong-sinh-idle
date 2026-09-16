@@ -1,0 +1,43 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { Leaf, X } from "lucide-react";
+import type { GameState } from "@/lib/types";
+import { elementNames, number, qualityNames } from "@/lib/format";
+
+export function GameModal({ title, children, onClose, busy = false }: { title: string; children: React.ReactNode; onClose?: () => void; busy?: boolean }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    const dialog = ref.current;
+    dialog?.showModal();
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { dialog?.close(); document.body.style.overflow = overflow; previous?.focus(); };
+  }, []);
+  return <dialog ref={ref} className="game-modal" aria-labelledby="modal-title" onCancel={e => { e.preventDefault(); if (!busy) onClose?.(); }}>
+    <div className="modal-heading"><span className="eyebrow">VẠN ĐẠO TRƯỜNG SINH</span>{onClose && <button className="icon-button" aria-label="Đóng" title="Đóng" disabled={busy} onClick={onClose}><X size={20} /></button>}</div>
+    <h2 id="modal-title">{title}</h2>{children}
+  </dialog>;
+}
+
+export function StatRow({ label, value, accent = false }: { label: string; value: React.ReactNode; accent?: boolean }) {
+  return <div className={`stat-row ${accent ? "accent" : ""}`}><span>{label}</span><strong>{value}</strong></div>;
+}
+
+export function SpiritualRootBadge({ root }: { root: GameState["spiritual_root"] }) {
+  return <div className={`root-badge element-${root.elements[0] ?? "wood"}`}><Leaf size={20} /><span><strong>{root.name}</strong><small>{qualityNames[root.quality] ?? root.quality} · {root.elements.map(e => elementNames[e] ?? e).join(" / ")}</small></span></div>;
+}
+
+export function CultivationProgress({ cultivation }: { cultivation: GameState["cultivation"] }) {
+  const progress = Math.min(100, Math.max(0, cultivation.current_exp / cultivation.required_exp * 100));
+  return <div className="cultivation-progress">
+    <div className="progress-label"><span>Tu vi tích lũy</span><span><strong>{number(cultivation.current_exp, 1)}</strong><span className="muted"> / {number(cultivation.required_exp)}</span></span></div>
+    <div className="progress-track" role="progressbar" aria-label="Tu vi tích lũy" aria-valuemin={0} aria-valuemax={cultivation.required_exp} aria-valuenow={Math.min(cultivation.current_exp, cultivation.required_exp)} aria-valuetext={`${number(cultivation.current_exp, 1)} trên ${number(cultivation.required_exp)} tu vi`}><div style={{ width: `${progress}%` }} /></div>
+  </div>;
+}
+
+export function GameTimeline({ logs }: { logs: GameState["recent_logs"] }) {
+  if (!logs.length) return <p className="muted">Trang tiên ký đầu tiên còn đang chờ bạn viết.</p>;
+  return <ol className="timeline">{logs.map(log => <li key={log.id}><time dateTime={log.created_at}>{new Date(log.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</time><p>{log.message}</p></li>)}</ol>;
+}

@@ -14,27 +14,28 @@ before broader xianxia systems are added.
 
 ## phase-1-core-loop
 
-Outcome: the player can open the game, see a persisted cultivator, receive
-offline cultivation progress, and inspect realm/root state from one game-state
-endpoint.
+Outcome: the player can open the game, create or load a persisted cultivator,
+receive offline cultivation progress, inspect realm/root state, and attempt a
+backend-decided basic breakthrough.
 
 Risk retired: the core idle model, persistence boundary, and backend/frontend
 split are proven before adding wider systems.
 
-Not yet: breakthrough, inventory, equipment, alchemy, exploration, battle, NPC
-simulation, pets, dao partners, and complex world events land in later
-milestones.
+Not yet: item-assisted breakthrough, inventory, equipment, alchemy, exploration,
+battle, NPC simulation, pets, dao partners, and complex world events land in
+later milestones.
 
 Human decisions: exact balancing numbers remain adjustable seed data.
 
-Evidence: backend tests prove deterministic idle progress; `/game/state`
-returns an initialized player; frontend renders the home state without putting
+Evidence: backend tests prove deterministic idle progress and idempotent
+breakthrough; `/game/state`, `/game/new`, and `/breakthrough/*` support UI-1;
+frontend renders responsive home/cultivation screens without putting
 authoritative game logic in the browser.
 
 ## phase-2-breakthrough-items
 
-Outcome: the player can prepare for and attempt breakthrough using persisted
-items and backend-calculated chance.
+Outcome: the player can prepare for breakthrough using persisted support items
+and see those items affect a backend-calculated chance.
 
 Risk retired: chance modifiers, failure consequences, and item consumption are
 modeled safely.
@@ -80,4 +81,3 @@ events after offline gaps.
 
 - Multiplayer, PvP, Redis, Celery, Kafka, WebSocket, complex auth, and
   microservices are intentionally out of scope.
-

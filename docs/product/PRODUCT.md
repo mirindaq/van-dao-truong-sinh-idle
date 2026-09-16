@@ -19,6 +19,8 @@ the world feel alive without click-heavy play.
 - Realm: data-driven cultivation ladder and stage thresholds.
 - Spiritual root: long-term affinity and cultivation modifier.
 - Game log: durable event feed for player and world events.
+- Breakthrough attempt: backend-decided realm/stage advancement attempt with
+  preview chance, random roll, result, and persisted receipt.
 - NPC, pet, inventory, equipment, alchemy, exploration, battle, and
   relationship objects are planned but not in Phase 1.
 
@@ -30,14 +32,16 @@ the world feel alive without click-heavy play.
   scattered through the app.
 - Offline progress is decided by stored UTC timestamps and applied when state is
   loaded or an action is taken.
+- Offline return reports and breakthrough receipts are decided by backend
+  service metadata on game logs.
 - Frontend state is display-only. Backend actions decide random rolls, rewards,
   progression, and persistence.
 
 ## Product Rules
 
-- The player starts as a mortal under Qingyun Mountain, finds the abandoned
-  cave, receives Qing Mu Jue, 10 spirit stones, and 3 Qi Gathering Pills, then
-  enters Qi Refining stage 1 after root inspection.
+- The player starts as a phàm nhân under Thanh Vân Sơn, finds the abandoned
+  cave, receives Thanh Mộc Quyết, 10 linh thạch, and 3 Tụ Khí Đan, then enters
+  Luyện Khí stage 1 after root inspection.
 - Idle systems must not run continuous timers. They calculate elapsed time from
   saved timestamps.
 - Randomness must go through a seedable random service.
@@ -51,8 +55,8 @@ the world feel alive without click-heavy play.
 
 ## Glossary
 
-- Realm: a major cultivation rank such as Mortal, Qi Refining, Foundation
-  Establishment, or Core Formation.
+- Realm: a major cultivation rank such as Phàm Nhân, Luyện Khí, Trúc Cơ, or Kim
+  Đan.
 - Stage: a minor layer within a realm where the realm supports layers.
 - Offline progress: advancement calculated from elapsed UTC timestamps rather
   than background timers.
@@ -62,4 +66,3 @@ the world feel alive without click-heavy play.
 
 - OPEN - owner: exact Vietnamese display names are authoritative in UI copy;
   default is to use the names from `PROJECT_CONTEXT.md`.
-

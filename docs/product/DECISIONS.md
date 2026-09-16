@@ -24,3 +24,12 @@ Decision: <one or two sentences>
 Why: <the reason, in one>
 Recorded in: <file and section> | none — reply only
 -->
+
+## 2026-09-16 — phase-1-core-loop — feature — Basic breakthrough in UI-1
+Decision: Phase 1 includes backend-decided breakthrough preview and attempt for
+minor and major realm advancement, with idempotent request ids and result
+receipts stored through game log metadata.
+Why: UI-1 needs a real breakthrough interaction, and the frontend must not roll
+outcomes or invent consequences.
+Recorded in: PRODUCT.md Source Of Truth; ROADMAP.md phase-1-core-loop;
+scopes/phase-1-core-loop.md Flow, Resilience, Evidence

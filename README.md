@@ -111,6 +111,10 @@ Then open:
 - Backend health: http://localhost:8000/health
 - Game state: http://localhost:8000/game/state
 
+The frontend proxies game API calls through `/api/*`; set `API_BASE_URL` or
+`NEXT_PUBLIC_API_BASE_URL` only when the backend is not on
+`http://localhost:8000`.
+
 ## Optional: Docker Compose
 
 Docker Compose is still available if you later install Docker Desktop or run in
@@ -127,6 +131,21 @@ cd backend
 pip install -e ".[dev]"
 pytest
 ```
+
+## Frontend checks
+
+```bash
+cd frontend
+npm install
+npm run lint
+npm run typecheck
+npm run build
+npm run test
+```
+
+Playwright starts a disposable FastAPI server for browser tests and verifies
+New Game, saved-state refresh, offline return, breakthrough success/failure,
+mobile navigation, and connection recovery.
 
 ## Architecture
 

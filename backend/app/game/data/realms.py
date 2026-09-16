@@ -25,7 +25,7 @@ REALM_DEFINITIONS = [
     },
     {
         "key": "golden_core",
-        "name": "Kim Dan",
+        "name": "Kim Đan",
         "rank_order": 3,
         "max_stage": 9,
         "base_required_exp": 4500,

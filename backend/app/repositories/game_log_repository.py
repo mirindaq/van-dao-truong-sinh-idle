@@ -20,3 +20,16 @@ class GameLogRepository:
         )
         return list(result.scalars())
 
+    async def pending_offline(self) -> GameLog | None:
+        result = await self.session.execute(select(GameLog).where(
+            GameLog.scope == "cultivation",
+            GameLog.log_metadata["pending"].as_boolean() == True,  # noqa: E712
+        ).order_by(GameLog.id).limit(1))
+        return result.scalar_one_or_none()
+
+    async def attempt_receipt(self, request_id: str) -> GameLog | None:
+        result = await self.session.execute(select(GameLog).where(
+            GameLog.scope == "breakthrough",
+            GameLog.log_metadata["request_id"].as_string() == request_id,
+        ).limit(1))
+        return result.scalar_one_or_none()

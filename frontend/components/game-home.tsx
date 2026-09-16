@@ -1,157 +1,118 @@
-import { Clock, Gem, Heart, Leaf, Mountain, PawPrint, Sparkles, Swords } from "lucide-react";
+"use client";
 
-import type { GameState } from "@/lib/types";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowRight, Check, CloudOff, Flame, Leaf, LockKeyhole, Mountain, RefreshCw, Sparkles, X } from "lucide-react";
+import { gameApi, GameApiError } from "@/lib/api";
 import { assetPath } from "@/lib/assets";
+import { duration, number, percent } from "@/lib/format";
+import type { BreakthroughPreview, BreakthroughResult, GameState } from "@/lib/types";
+import { GameShell, destinations } from "./game-shell";
+import { GameModal, GameTimeline, SpiritualRootBadge, StatRow } from "./game-ui";
+import { CultivationView } from "./cultivation-view";
 
-type Props = {
-  state: GameState | null;
-};
+type Modal = "breakthrough" | "settings" | "reveal" | null;
 
-export function GameHome({ state }: Props) {
-  if (!state) {
-    return (
-      <main className="min-h-screen px-4 py-6 text-parchment">
-        <section className="mx-auto flex max-w-5xl flex-col gap-4 rounded border border-gold/30 bg-ink/80 p-5">
-          <h1 className="font-display text-3xl text-gold">Vạn Đạo Trường Sinh</h1>
-          <p className="text-sm text-moon">
-            Backend chưa sẵn sàng. Hãy chạy API tại cổng 8000 rồi tải lại trang.
-          </p>
-        </section>
-      </main>
-    );
-  }
+export function GameHome() {
+  const [state, setState] = useState<GameState | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [noSave, setNoSave] = useState(false);
+  const [busy, setBusy] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [disconnected, setDisconnected] = useState(false);
+  const [view, setView] = useState("home");
+  const [modal, setModal] = useState<Modal>(null);
+  const [preview, setPreview] = useState<BreakthroughPreview | null>(null);
+  const [result, setResult] = useState<BreakthroughResult | null>(null);
+  const [name, setName] = useState("");
+  const [elapsed, setElapsed] = useState(0);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const lock = useRef(false);
+  const paused = useRef(false);
+  const loadedAt = useRef(0);
+  const requestId = useRef<string | null>(null);
 
-  const progress = Math.min(
-    100,
-    Math.round((state.cultivation.current_exp / state.cultivation.required_exp) * 100)
-  );
+  const acceptState = useCallback((next: GameState) => {
+    setState(next); setNoSave(false); setDisconnected(false);
+    loadedAt.current = performance.now(); setElapsed(0);
+  }, []);
 
-  return (
-    <main className="min-h-screen px-4 py-6">
-      <section className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="overflow-hidden rounded border border-gold/25 bg-ink/85 shadow-2xl">
-          <div
-            className="min-h-[18rem] bg-cover bg-center p-5"
-            style={{ backgroundImage: `linear-gradient(rgba(16,19,18,.72), rgba(16,19,18,.88)), url(${assetPath("maps/qingyun_mountain")})` }}
-          >
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-sm uppercase tracking-[0.18em] text-moon">Thanh Vân Sơn</p>
-                <h1 className="mt-2 font-display text-4xl text-gold">{state.player.name}</h1>
-                <p className="mt-1 text-lg text-parchment">
-                  {state.realm.name} tầng {state.realm.stage}
-                </p>
-              </div>
-              <div className="rounded border border-jade/60 bg-ink/70 px-3 py-2 text-sm text-moon">
-                {formatActivity(state.player.current_activity)}
-              </div>
-            </div>
+  const sync = useCallback(async () => {
+    try { acceptState(await gameApi.state()); }
+    catch (e) {
+      if (e instanceof GameApiError && e.code === "no_save") { setNoSave(true); setState(null); return; }
+      setDisconnected(true); throw e;
+    } finally { setLoading(false); }
+  }, [acceptState]);
 
-            <div className="mt-8">
-              <div className="flex justify-between text-sm text-moon">
-                <span>Tu vi</span>
-                <span>
-                  {Math.floor(state.cultivation.current_exp)} / {state.cultivation.required_exp}
-                </span>
-              </div>
-              <div className="mt-2 h-3 rounded bg-black/50">
-                <div className="h-3 rounded bg-gradient-to-r from-jade to-gold" style={{ width: `${progress}%` }} />
-              </div>
-            </div>
+  const execute = useCallback(async (label: string, operation: () => Promise<void>) => {
+    if (lock.current) return;
+    lock.current = true; setBusy(label); setError(null);
+    try { await operation(); }
+    catch (e) { setError(e instanceof Error ? e.message : "Linh khí gián đoạn. Hãy thử lại."); }
+    finally { lock.current = false; setBusy(""); }
+  }, []);
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <Metric icon={<Leaf size={18} />} label="Tu vi/phút" value={state.cultivation.rate_per_minute.toFixed(2)} />
-              <Metric icon={<Clock size={18} />} label="Tới tầng sau" value={formatDuration(state.cultivation.seconds_until_next_stage)} />
-              <Metric icon={<Gem size={18} />} label="Linh thạch" value={String(state.player.spirit_stones)} />
-            </div>
-          </div>
+  useEffect(() => {
+    void execute("load", sync);
+    const onHash = () => {
+      const id = location.hash.slice(1);
+      setView(destinations.some(d => d.id === id) ? id : "home");
+    };
+    onHash();
+    const setting = localStorage.getItem("reduce-motion") === "true";
+    setReducedMotion(setting); document.documentElement.dataset.reduceMotion = String(setting);
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [execute, sync]);
 
-          <div className="grid gap-3 border-t border-gold/20 p-5 sm:grid-cols-3">
-            <Action label="Tu luyện" primary />
-            <Action label="Thám hiểm" />
-            <Action label="Luyện đan" />
-          </div>
-        </div>
+  useEffect(() => { paused.current = modal !== null || Boolean(state?.offline_report) || noSave; }, [modal, state?.offline_report, noSave]);
+  useEffect(() => {
+    const refresh = () => {
+      if (!document.hidden && !paused.current) void execute("sync", sync);
+    };
+    const poll = window.setInterval(refresh, 30000);
+    const clock = window.setInterval(() => setElapsed(Math.max(0, (performance.now() - loadedAt.current) / 1000)), 1000);
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("online", refresh);
+    return () => { clearInterval(poll); clearInterval(clock); document.removeEventListener("visibilitychange", refresh); window.removeEventListener("online", refresh); };
+  }, [execute, sync]);
 
-        <aside className="grid gap-4">
-          <Panel title="Căn cốt">
-            <Metric icon={<Sparkles size={18} />} label="Linh căn" value={state.spiritual_root.name} />
-            <Metric icon={<Swords size={18} />} label="Chiến lực" value={String(state.player.combat_power)} />
-            <Metric icon={<PawPrint size={18} />} label="Linh thú" value={state.active_pet ?? "Chưa có"} />
-            <Metric icon={<Heart size={18} />} label="Đạo lữ" value={state.dao_partner ?? "Chưa có"} />
-          </Panel>
+  const navigate = (id: string) => { setView(id); if (location.hash !== `#${id}`) location.hash = id; window.scrollTo({ top: 0 }); };
+  const showPreview = () => void execute("preview", async () => {
+    setResult(null); requestId.current = null;
+    setPreview(await gameApi.preview()); setModal("breakthrough");
+  });
+  const attempt = () => void execute("attempt", async () => {
+    if (!preview) return;
+    requestId.current ??= crypto.randomUUID();
+    try { setResult(await gameApi.attempt(requestId.current, preview.revision)); }
+    catch (e) {
+      if (e instanceof GameApiError && e.code === "stale_preview") { setPreview(await gameApi.preview()); requestId.current = null; }
+      throw e;
+    }
+    await sync();
+  });
+  const closeModal = () => { setModal(null); setError(null); };
+  const errorBanner = error && <div className="error-banner" role="alert"><CloudOff size={18} /><span>{error}</span><button className="icon-button" onClick={() => setError(null)} aria-label="Ẩn thông báo" title="Ẩn thông báo"><X size={17} /></button></div>;
 
-          <Panel title="Gần đây">
-            <div className="space-y-3">
-              {state.recent_logs.map((log) => (
-                <div key={log.id} className="border-l border-gold/50 pl-3 text-sm text-parchment">
-                  {log.message}
-                </div>
-              ))}
-              {state.recent_logs.length === 0 && (
-                <div className="text-sm text-moon">Chưa có ghi chép.</div>
-              )}
-            </div>
-          </Panel>
-        </aside>
-      </section>
-    </main>
-  );
-}
+  if (loading) return <main className="loading-screen" aria-busy="true" aria-label="Đang tìm lại động phủ"><Mountain size={38} /><h1>Vạn Đạo Trường Sinh</h1><p>Đang tìm lại động phủ…</p><div className="skeleton hero-skeleton" /><div className="skeleton line-skeleton" /><div className="skeleton line-skeleton short" /></main>;
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded border border-gold/25 bg-ink/80 p-5">
-      <h2 className="mb-4 flex items-center gap-2 font-display text-xl text-gold">
-        <Mountain size={18} />
-        {title}
-      </h2>
-      <div className="grid gap-3">{children}</div>
-    </section>
-  );
-}
+  if (!state && !noSave) return <main className="opening" style={{ backgroundImage: `url(${assetPath("maps/qingyun_mountain")})` }}><div className="opening-content"><CloudOff size={38} /><p className="eyebrow">VẠN ĐẠO TRƯỜNG SINH</p><h1>Đường về chìm trong sương</h1><p role="alert">{error ?? "Chưa thể tìm lại động phủ của bạn."}</p><button className="primary-button" disabled={!!busy} onClick={() => void execute("load", sync)}><RefreshCw size={18} />{busy ? "Đang tìm lại…" : "THỬ LẠI"}</button></div></main>;
 
-function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="rounded border border-white/10 bg-black/25 p-3">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-moon">
-        {icon}
-        {label}
-      </div>
-      <div className="mt-2 text-lg text-parchment">{value}</div>
-    </div>
-  );
-}
+  if (!state) return <main className="opening" style={{ backgroundImage: `url(${assetPath("maps/qingyun_mountain")})` }}><div className="opening-content"><Mountain size={42} /><p className="eyebrow">MỘT ĐỜI PHÀM NHÂN · MỘT NIỆM TRƯỜNG SINH</p><h1>Vạn Đạo<br />Trường Sinh</h1><p>Thiên địa linh khí suy kiệt.</p><p>Bạn vốn là một phàm nhân dưới chân Thanh Vân Sơn. Một ngày lên núi hái thuốc, bạn tìm thấy một động phủ bị dây leo che phủ.</p><p>Sau cánh cửa đá, một con đường chưa từng biết đang chờ…</p><form onSubmit={e => { e.preventDefault(); void execute("new", async () => { try { acceptState(await gameApi.newGame(name.trim())); setModal("reveal"); } catch (e) { if (e instanceof GameApiError && e.code === "save_exists") { await sync(); return; } throw e; } }); }}><label htmlFor="player-name">Danh xưng của đạo hữu</label><input id="player-name" value={name} onChange={e => setName(e.target.value)} maxLength={40} required autoComplete="off" placeholder="Nhập tên nhân vật" disabled={!!busy} /><button className="primary-button" disabled={!!busy || !name.trim()}><Sparkles size={18} />{busy ? "Đang khai mở tiên lộ…" : "BẮT ĐẦU VẤN ĐẠO"}<ArrowRight size={18} /></button></form>{errorBanner}</div></main>;
 
-function Action({ label, primary = false }: { label: string; primary?: boolean }) {
-  return (
-    <button
-      className={[
-        "h-11 rounded border px-4 text-sm font-semibold transition",
-        primary
-          ? "border-gold bg-gold text-ink hover:bg-parchment"
-          : "border-jade/70 bg-jade/20 text-parchment hover:bg-jade/35"
-      ].join(" ")}
-    >
-      {label}
-    </button>
-  );
-}
-
-function formatDuration(seconds: number | null) {
-  if (seconds === null) return "Không rõ";
-  if (seconds === 0) return "Sẵn sàng";
-  const minutes = Math.ceil(seconds / 60);
-  if (minutes < 60) return `${minutes} phút`;
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  return rest ? `${hours} giờ ${rest} phút` : `${hours} giờ`;
-}
-
-function formatActivity(activity: string) {
-  const labels: Record<string, string> = {
-    cultivating: "Đang tu luyện"
-  };
-
-  return labels[activity] ?? activity;
+  const eta = state.cultivation.seconds_until_next_stage === null ? null : Math.max(0, state.cultivation.seconds_until_next_stage - elapsed);
+  const offline = state.offline_report;
+  const selected = destinations.find(d => d.id === view) ?? destinations[0];
+  return <GameShell state={state} view={view} navigate={navigate} refreshing={!!busy} disconnected={disconnected} onRefresh={() => void execute("sync", sync)} onSettings={() => setModal("settings")}>
+    {!modal && !offline && errorBanner}
+    {disconnected && <p className="connection-note" role="status">Đang hiển thị lần lưu gần nhất. Tu vi sẽ được đồng bộ khi kết nối trở lại.</p>}
+    {view === "home" || view === "cultivation" ? <CultivationView state={state} detailed={view === "cultivation"} eta={eta} navigate={navigate} onBreakthrough={showPreview} busy={!!busy} /> : view === "journal" ? <section className="journal-page"><div className="page-heading"><div><p className="eyebrow">DẤU CHÂN TRÊN TIÊN LỘ</p><h1>Nhật Ký</h1></div><span>Ghi chép gần đây</span></div><GameTimeline logs={state.recent_logs} /></section> : <section className="locked-page" style={{ backgroundImage: `url(${assetPath("maps/qingyun_mountain")})` }}><selected.icon size={40} /><p className="eyebrow">TIÊN DUYÊN CHƯA TỚI</p><h1>{selected.name}</h1><span className="locked-tag"><LockKeyhole size={14} />Chưa mở</span><p>{view === "pets" ? "Bạn chưa ký khế ước với bất kỳ linh thú nào." : view === "partner" ? "Tiên lộ dài đằng đẵng. Hiện tại chưa có người cùng bạn đồng hành." : view === "rift" ? "Sau màn sương, một cánh cửa cổ vẫn đang ngủ yên." : "Một chương mới trên tiên lộ vẫn còn đang khép lại."}</p><button className="secondary-button" onClick={() => navigate("cultivation")}><Leaf size={17} />Trở về tu luyện<ArrowRight size={16} /></button></section>}
+    {modal === "reveal" && <GameModal title="Trắc Linh Thạch"><div className="reveal-stone"><Leaf size={55} /></div><p className="center muted">Linh thạch khẽ sáng. Một luồng sinh khí lan tỏa.</p><SpiritualRootBadge root={state.spiritual_root} /><StatRow label="Hệ số tu luyện" value={`×${number(state.spiritual_root.cultivation_modifier, 2)}`} /><StatRow label="Hệ số đột phá" value={`×${number(state.spiritual_root.breakthrough_modifier, 2)}`} /><button className="primary-button full-width" onClick={() => { closeModal(); navigate("home"); }}>BƯỚC VÀO TIÊN LỘ<ArrowRight size={18} /></button></GameModal>}
+    {modal === "breakthrough" && preview && <GameModal title={result ? result.success ? "Đột phá thành công" : "Đột phá thất bại" : "Đột phá cảnh giới"} onClose={closeModal} busy={!!busy}>
+      {result ? <div className={`breakthrough-result ${result.success ? "success" : "failure"}`}><div className="probability-ring">{result.success ? <Sparkles size={50} /> : <Flame size={50} />}</div><h3>{result.realm.name} · Tầng {result.realm.stage}</h3><p>{result.message}</p>{result.cultivation_lost > 0 && <StatRow label="Tu vi tổn thất" value={`−${number(result.cultivation_lost, 2)}`} />}<button className="primary-button full-width" disabled={!!busy} onClick={closeModal}><Check size={18} />TIẾP TỤC TIÊN LỘ</button></div> : <><p className="realm-transition">{state.realm.name} · Tầng {state.realm.stage}<ArrowRight size={17} /><strong>{preview.target ? `${preview.target.name} · Tầng ${preview.target.stage}` : "Viên mãn"}</strong></p><div className="probability-ring"><strong>{percent(preview.final_chance)}</strong><span>Cơ hội thành công</span></div><StatRow label="Tỷ lệ cơ bản" value={percent(preview.base_chance)} /><StatRow label="Linh căn" value={`+${percent(preview.root_bonus)}`} /><StatRow label="Tổng tỷ lệ" value={percent(preview.final_chance)} accent /><p className="warning">Thất bại tổn thất {number(preview.failure_loss, 2)} tu vi.</p>{!preview.available && <p className="center muted">{preview.target ? `Cần ${number(preview.required_exp)} tu vi để đột phá.` : "Bạn đã tới tận cùng tiên lộ hiện tại."}</p>}<button className="primary-button full-width" disabled={!!busy || !preview.available} onClick={attempt}><Flame size={18} />{busy ? "ĐANG ĐỘT PHÁ…" : "BẮT ĐẦU ĐỘT PHÁ"}</button></>}{errorBanner}
+    </GameModal>}
+    {modal === "settings" && <GameModal title="Cài đặt" onClose={closeModal}><label className="setting-row"><span>Giảm chuyển động</span><input type="checkbox" checked={reducedMotion} onChange={e => { setReducedMotion(e.target.checked); document.documentElement.dataset.reduceMotion = String(e.target.checked); localStorage.setItem("reduce-motion", String(e.target.checked)); }} /></label><StatRow label="Hành trình" value={disconnected ? "Chờ kết nối" : "Đã lưu"} /><StatRow label="Lần đồng bộ" value={new Date(state.server_time).toLocaleTimeString("vi-VN")} /><button className="secondary-button full-width" disabled={!!busy} onClick={() => void execute("sync", sync)}><RefreshCw size={17} />Đồng bộ hành trình</button>{errorBanner}</GameModal>}
+    {!modal && offline && <GameModal title="Bế Quan Kết Thúc" busy={!!busy}><div className="offline-mark"><Mountain size={44} /></div><p className="center muted">Bạn đã bế quan {duration(offline.elapsed_seconds)}.</p><div className="offline-reward"><Sparkles size={24} /><strong>+{number(offline.earned_exp, 2)}</strong><span>Tu vi</span></div><p className="center muted">Đạo hạnh đã được ghi vào hành trình.</p><button className="primary-button full-width" disabled={!!busy} onClick={() => void execute("ack", async () => { await gameApi.acknowledgeOffline(offline.id); await sync(); })}><Check size={18} />{busy ? "ĐANG XÁC NHẬN…" : "NHẬN TU VI"}</button>{errorBanner}</GameModal>}
+  </GameShell>;
 }
