@@ -14,6 +14,8 @@ from app.game.random_service import RandomService
 from app.main import create_app
 from app.models.game_log import GameLog
 from app.models.player import Player
+from app.game.data.items import PILL_KEY
+from app.repositories.inventory_repository import InventoryRepository
 from app.repositories.player_repository import PlayerRepository
 from app.services import game_state_service
 from app.services.game_state_service import GameStateService
@@ -60,8 +62,11 @@ async def prepare(mode: str):
         if mode != "empty":
             await GameStateService(session).new_game("Thanh Vân")
             player = await PlayerRepository(session).get_first()
-            if mode in ("success", "failure"):
+            if mode in ("success", "failure", "no-pills"):
                 player.cultivation_exp = 150
+            if mode == "no-pills":
+                pill = await InventoryRepository(session).get(player.id, PILL_KEY)
+                pill.quantity = 0
             if mode == "offline":
                 player.last_cultivation_at = datetime.now(timezone.utc) - timedelta(hours=8)
             await session.commit()

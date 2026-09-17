@@ -1,4 +1,4 @@
-import type { BreakthroughPreview, BreakthroughResult, GameState } from "@/lib/types";
+import type { BreakthroughPreview, BreakthroughRequest, BreakthroughResult, GameState } from "@/lib/types";
 
 const messages: Record<string, string> = {
   no_save: "Tiên lộ của bạn chưa bắt đầu.",
@@ -7,6 +7,9 @@ const messages: Record<string, string> = {
   stale_preview: "Khí tức đã thay đổi. Hãy xem lại cơ hội đột phá.",
   max_realm: "Bạn đã tới tận cùng tiên lộ hiện tại.",
   realm_unavailable: "Cảnh giới tiếp theo chưa mở.",
+  insufficient_items: "Tụ Khí Đan đã hết. Hãy xem lại chuẩn bị đột phá.",
+  invalid_item: "Vật phẩm này không thể dùng để đột phá.",
+  request_conflict: "Lần đột phá này đã được gửi với lựa chọn khác. Hãy đồng bộ lại hành trình.",
 };
 
 export class GameApiError extends Error {
@@ -29,7 +32,7 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
     const code = typeof payload?.detail === "string" ? payload.detail : "unknown";
-    throw new GameApiError(code, messages[code] ?? (response.status === 422 ? "Tên đạo hữu cần từ 1 đến 40 ký tự hợp lệ." : "Chưa thể kết nối với động phủ. Hãy thử lại sau ít phút."));
+    throw new GameApiError(response.status >= 500 ? "connection" : code, messages[code] ?? (response.status === 422 ? "Thông tin chưa hợp lệ. Hãy kiểm tra lại lựa chọn." : "Chưa thể kết nối với động phủ. Hãy thử lại sau ít phút."));
   }
   return response.status === 204 ? undefined as T : response.json();
 }
@@ -38,6 +41,6 @@ export const gameApi = {
   state: () => request<GameState>("/game/state"),
   newGame: (name: string) => request<GameState>("/game/new", { name }),
   acknowledgeOffline: (id: number) => request<void>(`/game/offline/${id}/ack`, {}),
-  preview: () => request<BreakthroughPreview>("/breakthrough/preview"),
-  attempt: (request_id: string, revision: string) => request<BreakthroughResult>("/breakthrough/attempt", { request_id, revision }),
+  preview: (usePill = false) => request<BreakthroughPreview>(`/breakthrough/preview${usePill ? "?item_key=items%2Fqi_gathering_pill&quantity=1" : ""}`),
+  attempt: (payload: BreakthroughRequest) => request<BreakthroughResult>("/breakthrough/attempt", payload),
 };

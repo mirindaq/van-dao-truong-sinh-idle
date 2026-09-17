@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.game_log import GameLog
@@ -16,7 +16,7 @@ class GameLogRepository:
 
     async def recent(self, limit: int = 10) -> list[GameLog]:
         result = await self.session.execute(
-            select(GameLog).order_by(GameLog.created_at.desc()).limit(limit)
+            select(GameLog).where(GameLog.scope != "breakthrough_preview").order_by(GameLog.created_at.desc()).limit(limit)
         )
         return list(result.scalars())
 
@@ -27,9 +27,19 @@ class GameLogRepository:
         ).order_by(GameLog.id).limit(1))
         return result.scalar_one_or_none()
 
-    async def attempt_receipt(self, request_id: str) -> GameLog | None:
+    async def attempt_receipt(self, request_id: str, player_id: int) -> GameLog | None:
         result = await self.session.execute(select(GameLog).where(
             GameLog.scope == "breakthrough",
             GameLog.log_metadata["request_id"].as_string() == request_id,
+            or_(GameLog.log_metadata["player_id"].as_integer() == player_id,
+                GameLog.log_metadata["player_id"].as_integer().is_(None)),
+        ).limit(1))
+        return result.scalar_one_or_none()
+
+    async def preview_record(self, player_id: int, quantity: int) -> GameLog | None:
+        result = await self.session.execute(select(GameLog).where(
+            GameLog.scope == "breakthrough_preview",
+            GameLog.log_metadata["player_id"].as_integer() == player_id,
+            GameLog.log_metadata["quantity"].as_integer() == quantity,
         ).limit(1))
         return result.scalar_one_or_none()

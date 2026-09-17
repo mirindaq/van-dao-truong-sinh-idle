@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
+from typing import Literal
 from uuid import UUID
 
 
@@ -44,7 +45,11 @@ class BreakthroughRead(BaseModel):
     root_bonus: float
     final_chance: float
     failure_loss: float
-    revision: datetime
+    revision: str
+    item_key: str | None = None
+    quantity: int = 0
+    item_bonus: float = 0
+    pills_owned: int = 0
 
 
 class NewGameRequest(BaseModel):
@@ -52,9 +57,20 @@ class NewGameRequest(BaseModel):
     name: str = Field(min_length=1, max_length=40, pattern=r"^[^\x00-\x1f\x7f]+$")
 
 
-class BreakthroughRequest(BaseModel):
+class BreakthroughSelection(BaseModel):
+    item_key: Literal["items/qi_gathering_pill"] | None = None
+    quantity: int = Field(default=0, ge=0, le=1, strict=True)
+
+    @model_validator(mode="after")
+    def valid_selection(self):
+        if (self.item_key is None) != (self.quantity == 0):
+            raise ValueError("Item and quantity must match")
+        return self
+
+
+class BreakthroughRequest(BreakthroughSelection):
     request_id: UUID
-    revision: datetime
+    revision: str
 
 
 class BreakthroughResult(BaseModel):
@@ -62,6 +78,10 @@ class BreakthroughResult(BaseModel):
     message: str
     cultivation_lost: float
     realm: RealmRead
+    item_key: str | None = None
+    items_consumed: int = 0
+    final_chance: float | None = None
+    created_at: datetime | None = None
 
 
 class PlayerRead(BaseModel):
@@ -81,6 +101,15 @@ class GameLogRead(BaseModel):
     created_at: datetime
 
 
+class InventoryRead(BaseModel):
+    key: str
+    name: str
+    category: str
+    description: str
+    asset_key: str
+    quantity: int
+
+
 class GameStateRead(BaseModel):
     player: PlayerRead
     realm: RealmRead
@@ -92,3 +121,4 @@ class GameStateRead(BaseModel):
     server_time: datetime
     offline_report: OfflineRead | None
     breakthrough: BreakthroughRead
+    inventory: list[InventoryRead]

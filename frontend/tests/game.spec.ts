@@ -6,7 +6,8 @@ test.beforeEach(async ({ page, request }) => {
   await request.post(`${backend}/_test/prepare/empty`);
   // Redirect to the real isolated FastAPI server; no gameplay response is mocked.
   await page.route("**/api/**", async route => {
-    const path = new URL(route.request().url()).pathname.replace(/^\/api/, "");
+    const url = new URL(route.request().url());
+    const path = url.pathname.replace(/^\/api/, "") + url.search;
     const response = await route.fetch({ url: `${backend}${path}` });
     await route.fulfill({ response });
   });

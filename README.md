@@ -147,6 +147,27 @@ Playwright starts a disposable FastAPI server for browser tests and verifies
 New Game, saved-state refresh, offline return, breakthrough success/failure,
 mobile navigation, and connection recovery.
 
+## Inventory upgrade and verification
+
+Stop the backend and back up the database before upgrading an existing save.
+From `backend`, run `.venv\Scripts\python.exe -m alembic upgrade head`, then
+restart the backend. Revision `20260916_0004` moves the old pill count and manual
+into inventory, preserving zero quantities and progression. It does not grant
+new items to old saves. On an empty database, items are granted only by New Game.
+Do not downgrade this migration as a substitute for restoring a database backup.
+
+Backend `pytest -q` uses disposable PostgreSQL schemas, including real Alembic
+upgrades from revision 0003, reconnects and repeated upgrades. The configured DB
+user needs permission to create schemas; the player's default schema is not reset.
+Playwright also creates and removes its own schema. `npm test -- tests/inventory.spec.ts`
+checks item use, reordered previews, reload after a lost reply, retry conflicts,
+unavailable browser storage, and inventory persistence in a new browser context.
+The complete `npm test` includes the Phase 1 regressions. Build before running it.
+
+The browser stores only unresolved breakthrough request payloads in local storage.
+After a lost response, use **KIỂM TRA KẾT QUẢ** to recover the existing receipt.
+The saved inventory and game progress remain in PostgreSQL.
+
 ## Architecture
 
 Backend follows:

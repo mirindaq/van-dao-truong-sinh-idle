@@ -21,13 +21,17 @@ the world feel alive without click-heavy play.
 - Game log: durable event feed for player and world events.
 - Breakthrough attempt: backend-decided realm/stage advancement attempt with
   preview chance, random roll, result, and persisted receipt.
-- NPC, pet, inventory, equipment, alchemy, exploration, battle, and
+- Inventory: item definitions and quantities owned by a player, including
+  Tụ Khí Đan and the non-consumable Thanh Mộc Quyết.
+- NPC, pet, equipment, alchemy, exploration, battle, and
   relationship objects are planned but not in Phase 1.
 
 ## Source Of Truth
 
 - PostgreSQL is the source of truth for saved game state.
 - Player cultivation state is decided by the `players` record.
+- Item quantities are decided only by `owned_items`, keyed by player and item.
+  The compatibility player pill count in API responses is derived from inventory.
 - Realm progression is decided by seeded realm records, not hard-coded branches
   scattered through the app.
 - Offline progress is decided by stored UTC timestamps and applied when state is
@@ -46,6 +50,20 @@ the world feel alive without click-heavy play.
   saved timestamps.
 - Randomness must go through a seedable random service.
 - Game engines must be testable without HTTP.
+- New Game grants three pills and one manual once, in the player creation
+  transaction. Migrating an existing save preserves its remaining pills and
+  manual; loading, restarting or repeating a migration grants nothing extra.
+- A breakthrough may use zero or one Tụ Khí Đan, for minor or major advancement.
+  The pill adds ten percentage points after the root modifier, capped at 95%,
+  without reducing an already higher unsupported chance.
+- A committed supported success or failure consumes exactly one pill. Failure
+  loses 10% of the required cultivation, capped by current cultivation, with
+  no death, injury or debuff. Previewing, cancelling or rejection consumes none.
+- Item use, progression and receipt commit atomically. Replaying the same request
+  returns its receipt; reusing an id with a different payload is rejected.
+  Browser pending data only preserves the retry payload, never game ownership.
+- Thanh Mộc Quyết is owned, non-consumable and grants no additional bonus in
+  this slice. Only the starting pills are supplied; new sources await Phase 3.
 
 ## Access And Money
 

@@ -16,7 +16,6 @@ class Player(Base, TimestampMixin):
     stage: Mapped[int] = mapped_column(default=1)
     cultivation_exp: Mapped[float] = mapped_column(default=0)
     spirit_stones: Mapped[int] = mapped_column(default=0)
-    qi_gathering_pills: Mapped[int] = mapped_column(default=0)
     combat_power: Mapped[int] = mapped_column(default=1)
     manual_key: Mapped[str] = mapped_column(String(120), default="manual/qing_mu_jue")
     current_activity: Mapped[str] = mapped_column(String(120), default="cultivating")
@@ -24,4 +23,3 @@ class Player(Base, TimestampMixin):
 
     realm: Mapped["Realm"] = relationship(lazy="selectin")
     spiritual_root: Mapped["SpiritualRoot"] = relationship(lazy="selectin")
-

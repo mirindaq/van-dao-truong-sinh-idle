@@ -4,6 +4,7 @@ const FALLBACKS: Record<string, string> = {
   npcs: "/assets/characters/default-silhouette.svg",
   npc: "/assets/characters/default-silhouette.svg",
   skills: "/assets/ui/default-rune.svg",
+  manual: "/assets/ui/default-rune.svg",
   effects: "/assets/ui/default-rune.svg",
   pets: "/assets/pets/default-spirit-beast.svg",
   monsters: "/assets/monsters/default-monster.svg",

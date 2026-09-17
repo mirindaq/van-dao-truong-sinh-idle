@@ -44,7 +44,7 @@ No authoritative game value may live only in frontend memory.
 
 | Case | Expected result |
 |---|---|
-| First launch with empty database | Seed data and initial player are created. |
+| First launch with empty database | Realm and spiritual root seed data are created; `/game/state` returns a no-save response and the player is only created when the New Game screen calls `POST /game/new`. |
 | Browser refresh | `/game/state` returns the same saved player with updated offline progress. |
 | Long offline gap | Progress is calculated from timestamps and capped only by realm data rules. |
 | Offline modal refresh | Pending report remains until acknowledged through the backend. |

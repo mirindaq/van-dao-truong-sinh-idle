@@ -42,6 +42,15 @@ export type GameState = {
   server_time: string;
   offline_report: { id: number; elapsed_seconds: number; earned_exp: number } | null;
   breakthrough: BreakthroughPreview;
+  inventory: InventoryItem[];
+};
+
+export type InventoryItem = {
+  key: string; name: string; category: string; description: string; asset_key: string; quantity: number;
+};
+
+export type BreakthroughRequest = {
+  request_id: string; revision: string; item_key: string | null; quantity: number;
 };
 
 export type Realm = GameState["realm"];
@@ -54,11 +63,17 @@ export type BreakthroughPreview = {
   final_chance: number;
   failure_loss: number;
   revision: string;
+  item_key: string | null;
+  quantity: number;
+  item_bonus: number;
+  pills_owned: number;
 };
 
 export type BreakthroughResult = {
   success: boolean;
   message: string;
   cultivation_lost: number;
+  items_consumed: number;
+  final_chance: number | null;
   realm: Realm;
 };

@@ -33,3 +33,14 @@ Why: UI-1 needs a real breakthrough interaction, and the frontend must not roll
 outcomes or invent consequences.
 Recorded in: PRODUCT.md Source Of Truth; ROADMAP.md phase-1-core-loop;
 scopes/phase-1-core-loop.md Flow, Resilience, Evidence
+
+## 2026-09-17 — phase-2-breakthrough-items — feature — Persisted breakthrough items
+Decision: Implement the owner's September 16 choices: inventory with owned
+Thanh Mộc Quyết, zero/one pill per breakthrough (+10 percentage points, 95% cap
+without lowering the base chance), consumption on committed success/failure,
+and only three starting pills. Keep the Phase 1 failure penalty of 10% of the
+required cultivation, without death or debuffs. Equipment remains a later slice.
+Why: Support deliberate preparation while preserving old saves and making retries
+safe; inventory, outcome and receipt share a transaction and one ownership source.
+Recorded in: PRODUCT.md Core Objects, Source Of Truth, Product Rules;
+scopes/phase-2-breakthrough-items.md Open decisions, Resilience, Evidence

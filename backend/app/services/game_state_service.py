@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,6 +7,8 @@ from app.game.breakthrough import BreakthroughEngine
 from app.game.cultivation import CultivationEngine, CultivationInput
 from app.game.data.realms import REALM_DEFINITIONS, required_exp_for_stage
 from app.game.random_service import RandomService
+from app.game.data.items import PILL_KEY
+from app.repositories.inventory_repository import InventoryRepository
 from app.models.player import Player
 from app.models.realm import Realm
 from app.models.spiritual_root import SpiritualRoot
@@ -13,8 +16,8 @@ from app.repositories.game_log_repository import GameLogRepository
 from app.repositories.player_repository import PlayerRepository
 from app.repositories.realm_repository import RealmRepository
 from app.schemas.game_state import (
-    BreakthroughRead, BreakthroughRequest, BreakthroughResult, CultivationRead,
-    GameLogRead, GameStateRead, OfflineRead, PlayerRead, RealmRead, SpiritualRootRead,
+    BreakthroughRead, BreakthroughRequest, BreakthroughResult, BreakthroughSelection, CultivationRead,
+    GameLogRead, GameStateRead, InventoryRead, OfflineRead, PlayerRead, RealmRead, SpiritualRootRead,
 )
 
 INITIAL_ROOT = {
@@ -35,6 +38,7 @@ class GameStateService:
         self.players = PlayerRepository(session)
         self.realms = RealmRepository(session)
         self.logs = GameLogRepository(session)
+        self.inventory = InventoryRepository(session)
         self.cultivation_engine = CultivationEngine()
         self.breakthrough_engine = BreakthroughEngine()
         self.rng = rng or RandomService()
@@ -64,10 +68,11 @@ class GameStateService:
             raise RuntimeError("Seed data missing")
         player = await self.players.add(Player(
             name=name, realm=realm, spiritual_root=root, stage=1, cultivation_exp=0,
-            spirit_stones=10, qi_gathering_pills=3, combat_power=12,
+            spirit_stones=10, combat_power=12,
             manual_key="manual/qing_mu_jue", current_activity="cultivating",
             last_cultivation_at=datetime.now(timezone.utc),
         ))
+        await self.inventory.grant_initial(player.id)
         await self.logs.create("player", "Bạn tìm thấy động phủ bỏ hoang dưới chân Thanh Vân Sơn.")
         await self.logs.create("player", "Di vật còn lại gồm Thanh Mộc Quyết, 10 Linh Thạch và 3 Tụ Khí Đan.")
         state = await self._state(player)
@@ -81,34 +86,46 @@ class GameStateService:
             report.log_metadata = {**report.log_metadata, "pending": False}
         await self.session.commit()
 
-    async def preview(self) -> BreakthroughRead:
+    async def preview(self, selection: BreakthroughSelection | None = None) -> BreakthroughRead:
         player = await self._load()
         await self._apply_progress(player)
-        preview = await self._preview(player)
+        preview = await self._preview(player, selection)
         await self.session.commit()
         return preview
 
     async def attempt(self, request: BreakthroughRequest) -> BreakthroughResult:
         player = await self._load()
-        receipt = await self.logs.attempt_receipt(str(request.request_id))
+        receipt = await self.logs.attempt_receipt(str(request.request_id), player.id)
         if receipt is not None:
+            fingerprint = receipt.log_metadata.get("request")
+            if (fingerprint is not None and fingerprint != request.model_dump(mode="json")) or (fingerprint is None and request.quantity):
+                raise GameError("request_conflict")
             result = BreakthroughResult.model_validate(receipt.log_metadata["result"])
             await self.session.commit()
             return result
-        if request.revision != player.last_cultivation_at:
+        stored_preview = await self.logs.preview_record(player.id, request.quantity)
+        if (stored_preview is None or stored_preview.log_metadata["token"] != request.revision
+                or stored_preview.log_metadata["snapshot"] != await self._snapshot(player, request)):
             raise GameError("stale_preview")
         await self._apply_progress(player)
-        preview = await self._preview(player)
+        preview = await self._preview(player, request)
         if preview.target is None:
             raise GameError("max_realm")
         if not preview.available:
             raise GameError("insufficient_cultivation")
+        pill = await self.inventory.get(player.id, PILL_KEY)
+        if request.quantity and (pill is None or pill.quantity < 1):
+            raise GameError("insufficient_items")
         odds = self.breakthrough_engine.preview(
             major=player.stage == player.realm.max_stage,
             root_modifier=player.spiritual_root.breakthrough_modifier,
             required_exp=preview.required_exp,
+            use_pill=bool(request.quantity),
         )
+        source = self._realm_read(player)
         success = self.breakthrough_engine.attempt(odds, self.rng)
+        if request.quantity:
+            pill.quantity -= 1
         lost = 0.0
         if success:
             target_realm = await self.realms.get_realm_by_key(preview.target.key)
@@ -125,10 +142,18 @@ class GameStateService:
             message = f"Đột phá thất bại. Tổn thất {lost:g} tu vi. Hãy tĩnh tâm tu luyện."
         result = BreakthroughResult(
             success=success, message=message, cultivation_lost=lost, realm=self._realm_read(player),
+            item_key=request.item_key, items_consumed=request.quantity, final_chance=odds.total,
+            created_at=datetime.now(timezone.utc),
         )
         player.last_cultivation_at = max(datetime.now(timezone.utc), player.last_cultivation_at + timedelta(microseconds=1))
         log = await self.logs.create("breakthrough", message)
-        log.log_metadata = {"request_id": str(request.request_id), "result": result.model_dump(mode="json")}
+        log.log_metadata = {
+            "player_id": player.id, "request_id": str(request.request_id),
+            "source": source.model_dump(mode="json"), "target": preview.target.model_dump(mode="json"),
+            "request": request.model_dump(mode="json"), "result": result.model_dump(mode="json"),
+        }
+        if request.quantity:
+            log.message += " Đã dùng 1 Tụ Khí Đan."
         await self.session.commit()
         return result
 
@@ -154,7 +179,15 @@ class GameStateService:
             }
             report.message = f"Bế quan kết thúc. Nhận {report.log_metadata['earned_exp']:.2f} tu vi."
 
-    async def _preview(self, player: Player) -> BreakthroughRead:
+    async def _snapshot(self, player: Player, selection: BreakthroughSelection) -> dict:
+        pill = await self.inventory.get(player.id, PILL_KEY)
+        return dict(player_id=player.id, realm_id=player.realm_id, stage=player.stage,
+                    cultivation=player.cultivation_exp, timestamp=player.last_cultivation_at.isoformat(),
+                    pills=pill.quantity if pill else 0, item_key=selection.item_key,
+                    quantity=selection.quantity, root_modifier=player.spiritual_root.breakthrough_modifier)
+
+    async def _preview(self, player: Player, selection: BreakthroughSelection | None = None) -> BreakthroughRead:
+        selection = selection or BreakthroughSelection()
         required = required_exp_for_stage(player.realm.base_required_exp, player.realm.growth_factor, player.stage)
         target = None
         if player.stage < player.realm.max_stage:
@@ -168,21 +201,41 @@ class GameStateService:
         odds = self.breakthrough_engine.preview(
             major=player.stage == player.realm.max_stage,
             root_modifier=player.spiritual_root.breakthrough_modifier, required_exp=required,
+            use_pill=bool(selection.quantity),
         )
+        snapshot = await self._snapshot(player, selection)
+        record = await self.logs.preview_record(player.id, selection.quantity)
+        if record is None:
+            record = await self.logs.create("breakthrough_preview", "")
+        if record.log_metadata.get("snapshot") != snapshot:
+            record.log_metadata = dict(player_id=player.id, quantity=selection.quantity,
+                                       token=str(uuid4()), snapshot=snapshot)
         return BreakthroughRead(
             available=target is not None and player.cultivation_exp >= required,
             target=target, required_exp=required, base_chance=odds.base,
             root_bonus=odds.root_bonus, final_chance=odds.total,
-            failure_loss=odds.failure_loss, revision=player.last_cultivation_at,
+            failure_loss=odds.failure_loss, revision=record.log_metadata["token"],
+            item_key=selection.item_key, quantity=selection.quantity, item_bonus=odds.item_bonus,
+            pills_owned=snapshot["pills"],
         )
 
     async def _state(self, player: Player) -> GameStateRead:
+        inventory = [InventoryRead(
+            key=owned.item_key, name=owned.item.name, category=owned.item.category,
+            description=owned.item.description, asset_key=owned.item.asset_key, quantity=owned.quantity,
+        ) for owned in await self.inventory.list(player.id)]
+        pills = next((item.quantity for item in inventory if item.key == PILL_KEY), 0)
         preview = await self._preview(player)
         base = self._base_rate_per_minute(player)
         rate = base * player.spiritual_root.cultivation_modifier
         report = await self.logs.pending_offline()
         return GameStateRead(
-            player=PlayerRead.model_validate(player, from_attributes=True),
+            player=PlayerRead(
+                id=player.id, name=player.name, spirit_stones=player.spirit_stones,
+                qi_gathering_pills=pills, combat_power=player.combat_power,
+                manual_key=player.manual_key, current_activity=player.current_activity,
+            ),
+            inventory=inventory,
             realm=self._realm_read(player),
             spiritual_root=SpiritualRootRead.model_validate(player.spiritual_root, from_attributes=True),
             cultivation=CultivationRead(
