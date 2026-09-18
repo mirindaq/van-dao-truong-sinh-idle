@@ -53,15 +53,17 @@ Outcome: Nhận gói đồ một lần, mặc/tháo đồ sở hữu và thấy 
 
 ## Evidence
 Automated:
-- [ ] E-1: Migration 0004 -> head giữ save/kho/receipt, chưa nhận đồ; chạy lại ổn.
-- [ ] E-2: Gói nhận một lần qua request lặp/đồng thời; rollback không cấp dở.
-- [ ] E-3: Mặc/tháo/thay đúng bonus, giữ số lượng, restart giữ ô.
-- [ ] E-4: Sai slot/đồ không sở hữu bị từ chối; hai request không nhân bonus.
-- [ ] E-5: Đột phá chỉ tăng nền, tu luyện và xác suất không đổi do trang bị.
-- [ ] E-6: Full backend/frontend tests và lint/typecheck/build đạt.
+- [x] E-1: Migration 0004 -> head giữ save/kho/receipt, chưa nhận đồ; chạy lại ổn.
+- [x] E-2: Gói nhận một lần qua request lặp/đồng thời; rollback không cấp dở.
+- [x] E-3: Mặc/tháo/thay đúng bonus, giữ số lượng, restart giữ ô.
+- [x] E-4: Sai slot/đồ không sở hữu bị từ chối; hai request không nhân bonus.
+- [x] E-5: Đột phá chỉ tăng nền, tu luyện và xác suất không đổi do trang bị.
+- [x] E-6: Full backend/frontend tests và lint/typecheck/build đạt.
 Manual, at close:
-- [ ] E-7: Nhận/mặc/tháo trên desktop/mobile, không overflow ở 320px, ảnh và keyboard ổn.
-- [ ] E-8: Ngắt reply sau commit, đồng bộ lại; reload/context mới giữ đồ và slot.
+- [x] E-7: Nhận/mặc/tháo trên desktop/mobile, không overflow ở 320px, ảnh và keyboard ổn.
+- [x] E-8: Ngắt reply sau commit, đồng bộ lại; reload/context mới giữ đồ và slot.
 
 ## Closed
-Đã triển khai và kiểm chứng đợt đầu; chưa đóng Phase 2.
+Closed 2026-09-18 — Codex. Backend 39 passed, Playwright 20 passed,
+lint/typecheck/build passed; browser trực tiếp đã kiểm tra gói, slot, retry,
+keyboard và 320px. Không còn deferred item trong scope này ngoài Phase 3.

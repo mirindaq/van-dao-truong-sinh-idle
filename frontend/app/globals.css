@@ -364,3 +364,19 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *:before, htm
 .equipment-pack button { flex-shrink: 0; }
 @media (max-width: 1000px) { .equipment-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .equipment-grid { grid-template-columns: 1fr; } .equipment-pack, .equipment-recovery { align-items: stretch; flex-direction: column; padding: 18px; } }
+.exploration-location, .exploration-result { display: flex; align-items: center; gap: 22px; padding: 26px; border: 1px solid var(--line); background: var(--surface); margin: 22px 0; }
+.exploration-location h2, .exploration-result h2 { margin: 4px 0 8px; }
+.exploration-mark { display: grid; place-items: center; width: 72px; height: 72px; border: 1px solid var(--gold); color: var(--gold); }
+.exploration-location > div:nth-child(2) { flex: 1; }
+.exploration-location > button { flex-shrink: 0; }
+.exploration-meta, .exploration-rewards { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px; color: var(--jade); }
+.exploration-meta span, .exploration-rewards span { display: inline-flex; gap: 7px; align-items: center; }
+.exploration-result.victory { border-color: var(--gold); }
+.exploration-result.defeat { border-color: var(--danger); }
+.exploration-result > div:first-child { flex: 1; }
+.battle-log { border: 1px solid var(--line); padding: 22px; margin: 22px 0; }
+.battle-log ol { margin: 16px 0 0; padding: 0; list-style: none; }
+.battle-log li { display: grid; grid-template-columns: 80px 1fr auto; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.battle-log small { color: var(--muted); }
+.exploration-empty { margin: 24px 0; }
+@media (max-width: 600px) { .exploration-location, .exploration-result { align-items: stretch; flex-direction: column; padding: 18px; } .exploration-location > button { width: 100%; } .battle-log li { grid-template-columns: 1fr; gap: 2px; } }

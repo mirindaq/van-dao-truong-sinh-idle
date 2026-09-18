@@ -8,24 +8,9 @@ before broader xianxia systems are added.
 | Milestone | Scope | Status |
 |---|---|---|
 | phase-1-core-loop | scopes/phase-1-core-loop.md | closed 2026-09-17 |
-| phase-2-breakthrough-items | scopes/phase-2-breakthrough-items.md | open |
-| phase-3-exploration-battle | scopes/phase-3-exploration-battle.md | not started |
+| phase-2-breakthrough-items | scopes/phase-2-breakthrough-items.md | closed 2026-09-18 |
+| phase-3-exploration-battle | scopes/phase-3-exploration-battle.md | closed 2026-09-18 |
 | phase-4-living-world | scopes/phase-4-living-world.md | not started |
-
-## phase-2-breakthrough-items
-
-Outcome: the player can prepare for breakthrough using persisted support items
-and see those items affect a backend-calculated chance.
-
-Risk retired: chance modifiers, failure consequences, and item consumption are
-modeled safely.
-
-Not yet: exploration drops and battle rewards land in `phase-3-exploration-battle`.
-
-Human decisions: final failure consequence tuning.
-
-Evidence: breakthrough chance and random roll are deterministic under seed;
-failed breakthrough does not kill the player.
 
 ## phase-3-exploration-battle
 

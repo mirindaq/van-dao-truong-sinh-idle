@@ -175,6 +175,11 @@ progress; it does not automatically claim or equip the pack. The pack is
 claimed from Túi Đồ and contains one sword, robe and amulet. Equipping changes
 combat power only; cultivation and breakthrough chance are unchanged.
 
+Exploration revision `20260918_0006` adds immediate Thanh Vân Sơn runs and
+persistent battle logs. Run `alembic upgrade head` before using it. A victory
+awards 10 Linh Thạch and 1 Tụ Khí Đan; the same request id is safe to retry and
+does not battle or reward twice. Defeat saves its log without a reward.
+
 ## Architecture
 
 Backend follows:

@@ -50,6 +50,13 @@ export type GameState = {
 };
 
 export type EquipmentSlot = "weapon" | "head" | "body" | "feet" | "ring" | "amulet";
+export type Exploration = {
+  id: number; request_id: string; location_key: string; state: "resolving" | "victory" | "defeat" | "empty";
+  message: string; victory: boolean | null; reward_stones: number; reward_pills: number;
+  battle_log: Array<{ turn: number; actor: string; damage: number; target_hp: number }>;
+  created_at: string;
+};
+export type ExplorationResponse = { state: GameState; exploration: Exploration };
 
 export type InventoryItem = {
   key: string; name: string; category: string; description: string; asset_key: string; quantity: number;

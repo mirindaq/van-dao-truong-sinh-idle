@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.api.routes.breakthrough import router as breakthrough_router
 from app.api.routes.equipment import router as equipment_router
+from app.api.routes.exploration import router as exploration_router
 from app.services.game_state_service import GameError
 
 from app.api.routes.game_state import router as game_state_router
@@ -27,6 +28,7 @@ def create_app() -> FastAPI:
     app.include_router(game_state_router, prefix="/game", tags=["game"])
     app.include_router(breakthrough_router, prefix="/breakthrough", tags=["breakthrough"])
     app.include_router(equipment_router, prefix="/equipment", tags=["equipment"])
+    app.include_router(exploration_router, prefix="/exploration", tags=["exploration"])
 
     @app.exception_handler(GameError)
     async def game_error_handler(request, exc: GameError):

@@ -141,6 +141,10 @@ Manual, at close (UI qua tk-ui-check, desktop và mobile):
 
 ## Closed
 
-Kiểm chứng 2026-09-17: backend pytest 30 pass; frontend lint/typecheck/build pass,
-Playwright 17 pass. UI desktop/mobile/320px và diễn tập migration schema riêng đạt.
-Chưa đóng Phase 2; nhánh trang bị có scope riêng tại `phase-2-equipment.md`.
+Closed 2026-09-18 — Codex.
+- E-1..E-9: backend 39 passed; frontend lint/typecheck/build và Playwright 20 passed.
+- E-10..E-13: browser kiểm tra túi đồ, đan, desktop/mobile/320px, mất phản hồi,
+  migration schema riêng và save cũ; kết quả khớp backend.
+- Nhánh trang bị: scope `phase-2-equipment.md` E-1..E-8 đạt; gói nhận một lần,
+  sáu ô, mặc/tháo, retry sau commit và keyboard/mobile đã kiểm chứng.
+- Không có lỗi còn lại; các deferred items trỏ tới Phase 3/4.

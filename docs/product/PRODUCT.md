@@ -21,6 +21,8 @@ the world feel alive without click-heavy play.
 - Game log: durable event feed for player and world events.
 - Breakthrough attempt: backend-decided realm/stage advancement attempt with
   preview chance, random roll, result, and persisted receipt.
+- Exploration run: a persisted location attempt with an immutable battle log,
+  result and reward receipt.
 - Inventory: item definitions and quantities owned by a player, including
   Tụ Khí Đan and the non-consumable Thanh Mộc Quyết.
 - Equipment: owned items may occupy one of six saved slots. Equipped items do
@@ -74,6 +76,11 @@ the world feel alive without click-heavy play.
 - Equipment in this slice grants only +5 sword, +3 robe or +2 amulet combat
   power. Loot, random combat stats, durability, upgrades and detailed battle
   attributes belong to Phase 3.
+- Exploration resolves immediately in this milestone. Thanh Vân Sơn has a 20%
+  empty encounter with no loot; victory awards 10 Linh Thạch and 1 Tụ Khí Đan;
+  defeat awards nothing but keeps the battle log. Seeded battle randomness is
+  replayable, and a request id replays the stored result without a second
+  battle or reward.
 
 ## Access And Money
 
