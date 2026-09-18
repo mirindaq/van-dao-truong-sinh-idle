@@ -23,7 +23,11 @@ the world feel alive without click-heavy play.
   preview chance, random roll, result, and persisted receipt.
 - Inventory: item definitions and quantities owned by a player, including
   Tụ Khí Đan and the non-consumable Thanh Mộc Quyết.
-- NPC, pet, equipment, alchemy, exploration, battle, and
+- Equipment: owned items may occupy one of six saved slots. Equipped items do
+  not leave inventory; total combat power is the player base value plus the
+  bonuses of equipped items. Equip/unequip does not change cultivation or
+  breakthrough chance.
+- NPC, pet, alchemy, exploration, battle, and
   relationship objects are planned but not in Phase 1.
 
 ## Source Of Truth
@@ -32,6 +36,9 @@ the world feel alive without click-heavy play.
 - Player cultivation state is decided by the `players` record.
 - Item quantities are decided only by `owned_items`, keyed by player and item.
   The compatibility player pill count in API responses is derived from inventory.
+- Equipped slots and the one-time equipment-pack claim are decided by
+  PostgreSQL. The pack grants one Thanh Trúc Kiếm, one Vải Thô Đạo Bào and one
+  Thanh Mộc Ngọc Bội to old and new saves, and repeated claims grant nothing.
 - Realm progression is decided by seeded realm records, not hard-coded branches
   scattered through the app.
 - Offline progress is decided by stored UTC timestamps and applied when state is
@@ -64,6 +71,9 @@ the world feel alive without click-heavy play.
   Browser pending data only preserves the retry payload, never game ownership.
 - Thanh Mộc Quyết is owned, non-consumable and grants no additional bonus in
   this slice. Only the starting pills are supplied; new sources await Phase 3.
+- Equipment in this slice grants only +5 sword, +3 robe or +2 amulet combat
+  power. Loot, random combat stats, durability, upgrades and detailed battle
+  attributes belong to Phase 3.
 
 ## Access And Money
 

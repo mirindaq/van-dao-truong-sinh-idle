@@ -90,6 +90,8 @@ class PlayerRead(BaseModel):
     spirit_stones: int
     qi_gathering_pills: int
     combat_power: int
+    base_combat_power: int
+    equipment_bonus: int
     manual_key: str
     current_activity: str
 
@@ -108,6 +110,21 @@ class InventoryRead(BaseModel):
     description: str
     asset_key: str
     quantity: int
+    equipment_slot: str | None = None
+    combat_bonus: int = 0
+
+
+EquipmentSlot = Literal['weapon', 'head', 'body', 'feet', 'ring', 'amulet']
+
+
+class EquipRequest(BaseModel):
+    slot: EquipmentSlot
+    item_key: str | None = Field(default=None, min_length=1, max_length=120)
+
+
+class EquippedRead(BaseModel):
+    slot: EquipmentSlot
+    item_key: str
 
 
 class GameStateRead(BaseModel):
@@ -122,3 +139,5 @@ class GameStateRead(BaseModel):
     offline_report: OfflineRead | None
     breakthrough: BreakthroughRead
     inventory: list[InventoryRead]
+    equipment: list[EquippedRead]
+    equipment_pack_claimed: bool

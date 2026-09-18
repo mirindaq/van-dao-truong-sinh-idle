@@ -1,1 +1,1 @@
-from app.models.item import Item, OwnedItem  # noqa: F401
+from app.models.item import Item, OwnedItem, EquippedItem  # noqa: F401

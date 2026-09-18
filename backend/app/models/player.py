@@ -17,6 +17,7 @@ class Player(Base, TimestampMixin):
     cultivation_exp: Mapped[float] = mapped_column(default=0)
     spirit_stones: Mapped[int] = mapped_column(default=0)
     combat_power: Mapped[int] = mapped_column(default=1)
+    equipment_pack_claimed: Mapped[bool] = mapped_column(default=False)
     manual_key: Mapped[str] = mapped_column(String(120), default="manual/qing_mu_jue")
     current_activity: Mapped[str] = mapped_column(String(120), default="cultivating")
     last_cultivation_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

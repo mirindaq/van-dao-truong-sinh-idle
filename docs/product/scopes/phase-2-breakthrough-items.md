@@ -3,8 +3,8 @@
 Milestone: `phase-2-breakthrough-items` trong ROADMAP.md; luật nền từ PRODUCT.md.
 Outcome: Người chơi xem vật phẩm đã lưu, chọn đan hỗ trợ và thấy tác động lên
 tỷ lệ đột phá do backend tính; kết quả và tiêu hao được lưu cùng nhau.
-Status: Đã triển khai và kiểm chứng đợt đầu. Trạng thái milestone trong roadmap chưa đổi.
-Phase 1 chưa được đóng.
+Status: Đã triển khai và kiểm chứng đợt đầu; milestone Phase 2 đang mở.
+Phase 1 đã đóng 2026-09-17; owner chọn làm tiếp nhánh trang bị trước Phase 3.
 
 ## Open decisions
 
@@ -143,4 +143,4 @@ Manual, at close (UI qua tk-ui-check, desktop và mobile):
 
 Kiểm chứng 2026-09-17: backend pytest 30 pass; frontend lint/typecheck/build pass,
 Playwright 17 pass. UI desktop/mobile/320px và diễn tập migration schema riêng đạt.
-Chưa đóng Phase 1 hoặc Phase 2; nhánh trang bị vẫn cần scope riêng.
+Chưa đóng Phase 2; nhánh trang bị có scope riêng tại `phase-2-equipment.md`.

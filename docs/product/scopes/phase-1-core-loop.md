@@ -2,8 +2,8 @@
 
 ## Open Decisions
 
-- OPEN - owner: exact balance values for realm thresholds; default: use seed
-  values that are easy to tune and deterministic in tests.
+- Settled 2026-09-17: tiếp tục dùng seed hiện tại khi triển khai milestone kế
+  theo yêu cầu owner; các giá trị vẫn là dữ liệu cân bằng có thể chỉnh.
 
 ## Flow
 
@@ -81,4 +81,14 @@ Manual:
 
 ## Closed
 
-Open.
+Closed 2026-09-17 — Codex.
+- Backend pytest: 30 passed; health trả ok; tests xác nhận no-save/New Game,
+  lưu/đọc lại, offline ack, preview backend và replay receipt.
+- Frontend lint/typecheck/build exit 0; Playwright 17 passed.
+- agent-browser trên API PostgreSQL schema tách biệt: desktop 1440x900 và
+  mobile 390x844 đã thao tác New Game, Trắc Linh Thạch, Động Phủ, Tu Luyện,
+  Bế Quan Kết Thúc/nhận tu vi và kết quả đột phá (success desktop, failure mobile).
+- Mobile không overflow; console/browser errors sạch ở bước kiểm tra cuối.
+  Trong kiểm tra thủ công, reset fixture quá sớm sau offline ack gây tranh
+  request với sync; lỗi chỉ thuộc cách chuyển fixture kiểm thử, không xảy ra
+  trong flow Playwright (chờ thao tác trước hoàn tất).

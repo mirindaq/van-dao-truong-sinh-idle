@@ -1,4 +1,4 @@
-import type { BreakthroughPreview, BreakthroughRequest, BreakthroughResult, GameState } from "@/lib/types";
+import type { BreakthroughPreview, BreakthroughRequest, BreakthroughResult, GameState, EquipmentSlot } from "@/lib/types";
 
 const messages: Record<string, string> = {
   no_save: "Tiên lộ của bạn chưa bắt đầu.",
@@ -9,6 +9,8 @@ const messages: Record<string, string> = {
   realm_unavailable: "Cảnh giới tiếp theo chưa mở.",
   insufficient_items: "Tụ Khí Đan đã hết. Hãy xem lại chuẩn bị đột phá.",
   invalid_item: "Vật phẩm này không thể dùng để đột phá.",
+  item_not_owned: "Bạn chưa sở hữu trang bị này. Hãy đồng bộ lại túi đồ.",
+  invalid_equipment: "Vật phẩm không phù hợp với ô trang bị này.",
   request_conflict: "Lần đột phá này đã được gửi với lựa chọn khác. Hãy đồng bộ lại hành trình.",
 };
 
@@ -38,6 +40,8 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
 }
 
 export const gameApi = {
+  claimEquipment: () => request<GameState>("/equipment/claim", {}),
+  equip: (slot: EquipmentSlot, item_key: string | null) => request<GameState>("/equipment/slot", { slot, item_key }),
   state: () => request<GameState>("/game/state"),
   newGame: (name: string) => request<GameState>("/game/new", { name }),
   acknowledgeOffline: (id: number) => request<void>(`/game/offline/${id}/ack`, {}),

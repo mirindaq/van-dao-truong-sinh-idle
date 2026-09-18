@@ -5,6 +5,8 @@ export type GameState = {
     spirit_stones: number;
     qi_gathering_pills: number;
     combat_power: number;
+    base_combat_power: number;
+    equipment_bonus: number;
     manual_key: string;
     current_activity: string;
   };
@@ -43,10 +45,15 @@ export type GameState = {
   offline_report: { id: number; elapsed_seconds: number; earned_exp: number } | null;
   breakthrough: BreakthroughPreview;
   inventory: InventoryItem[];
+  equipment: Array<{ slot: EquipmentSlot; item_key: string }>;
+  equipment_pack_claimed: boolean;
 };
+
+export type EquipmentSlot = "weapon" | "head" | "body" | "feet" | "ring" | "amulet";
 
 export type InventoryItem = {
   key: string; name: string; category: string; description: string; asset_key: string; quantity: number;
+  equipment_slot: EquipmentSlot | null; combat_bonus: number;
 };
 
 export type BreakthroughRequest = {

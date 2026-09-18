@@ -9,6 +9,7 @@ from app.game.data.realms import REALM_DEFINITIONS, required_exp_for_stage
 from app.game.random_service import RandomService
 from app.game.data.items import PILL_KEY
 from app.repositories.inventory_repository import InventoryRepository
+from app.repositories.equipment_repository import EquipmentRepository
 from app.models.player import Player
 from app.models.realm import Realm
 from app.models.spiritual_root import SpiritualRoot
@@ -18,6 +19,7 @@ from app.repositories.realm_repository import RealmRepository
 from app.schemas.game_state import (
     BreakthroughRead, BreakthroughRequest, BreakthroughResult, BreakthroughSelection, CultivationRead,
     GameLogRead, GameStateRead, InventoryRead, OfflineRead, PlayerRead, RealmRead, SpiritualRootRead,
+    EquipRequest, EquippedRead,
 )
 
 INITIAL_ROOT = {
@@ -39,6 +41,7 @@ class GameStateService:
         self.realms = RealmRepository(session)
         self.logs = GameLogRepository(session)
         self.inventory = InventoryRepository(session)
+        self.equipment = EquipmentRepository(session)
         self.cultivation_engine = CultivationEngine()
         self.breakthrough_engine = BreakthroughEngine()
         self.rng = rng or RandomService()
@@ -85,6 +88,33 @@ class GameStateService:
         if report is not None and report.id == report_id:
             report.log_metadata = {**report.log_metadata, "pending": False}
         await self.session.commit()
+
+    async def claim_equipment_pack(self) -> GameStateRead:
+        player = await self._load()
+        if not player.equipment_pack_claimed:
+            await self.equipment.claim(player.id)
+            player.equipment_pack_claimed = True
+            await self.logs.create('equipment', 'Đã nhận gói trang bị: Thanh Trúc Kiếm, Vải Thô Đạo Bào và Thanh Mộc Ngọc Bội.')
+        await self._apply_progress(player)
+        state = await self._state(player)
+        await self.session.commit()
+        return state
+
+    async def equip(self, request: EquipRequest) -> GameStateRead:
+        player = await self._load()
+        if request.item_key is not None:
+            owned = await self.inventory.get(player.id, request.item_key)
+            if owned is None or owned.quantity < 1:
+                raise GameError('item_not_owned')
+            if owned.item.category != 'equipment' or owned.item.equipment_slot != request.slot:
+                raise GameError('invalid_equipment')
+            if any(row.item_key == request.item_key and row.slot != request.slot for row in await self.equipment.list(player.id)):
+                raise GameError('invalid_equipment')
+        await self.equipment.set_slot(player.id, request.slot, request.item_key)
+        await self._apply_progress(player)
+        state = await self._state(player)
+        await self.session.commit()
+        return state
 
     async def preview(self, selection: BreakthroughSelection | None = None) -> BreakthroughRead:
         player = await self._load()
@@ -223,8 +253,12 @@ class GameStateService:
         inventory = [InventoryRead(
             key=owned.item_key, name=owned.item.name, category=owned.item.category,
             description=owned.item.description, asset_key=owned.item.asset_key, quantity=owned.quantity,
+            equipment_slot=owned.item.equipment_slot, combat_bonus=owned.item.combat_bonus,
         ) for owned in await self.inventory.list(player.id)]
         pills = next((item.quantity for item in inventory if item.key == PILL_KEY), 0)
+        equipment = [EquippedRead(slot=row.slot, item_key=row.item_key) for row in await self.equipment.list(player.id)]
+        equipped_keys = {row.item_key for row in equipment}
+        equipment_bonus = sum(item.combat_bonus for item in inventory if item.key in equipped_keys and item.quantity > 0)
         preview = await self._preview(player)
         base = self._base_rate_per_minute(player)
         rate = base * player.spiritual_root.cultivation_modifier
@@ -232,10 +266,12 @@ class GameStateService:
         return GameStateRead(
             player=PlayerRead(
                 id=player.id, name=player.name, spirit_stones=player.spirit_stones,
-                qi_gathering_pills=pills, combat_power=player.combat_power,
+                qi_gathering_pills=pills, combat_power=player.combat_power + equipment_bonus,
+                base_combat_power=player.combat_power, equipment_bonus=equipment_bonus,
                 manual_key=player.manual_key, current_activity=player.current_activity,
             ),
             inventory=inventory,
+            equipment=equipment, equipment_pack_claimed=player.equipment_pack_claimed,
             realm=self._realm_read(player),
             spiritual_root=SpiritualRootRead.model_validate(player.spiritual_root, from_attributes=True),
             cultivation=CultivationRead(

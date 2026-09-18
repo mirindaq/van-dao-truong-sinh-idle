@@ -349,3 +349,18 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *:before, htm
   .owned-item img { width: 48px; height: 48px; }
   .owned-item button { grid-column: 2; justify-self: start; }
 }
+/* Equipment ownership and slots */
+.equipment-summary { max-width: 560px; margin-bottom: 20px; }
+.equipment-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 24px 0; }
+.equipment-panel { min-width: 0; border: 1px solid var(--border); padding: 22px; background: rgba(255,255,255,.02); }
+.equipment-panel h2 { font-size: 18px; }
+.equipped-detail { display: flex; align-items: center; gap: 12px; margin: 18px 0; }
+.equipped-detail p { color: var(--gold); margin: 6px 0 0; }
+.equipment-choice { width: 100%; margin-top: 14px; white-space: normal; text-align: left; }
+.equipment-choice span { margin-left: auto; }
+.equipment-pack, .equipment-recovery { display: flex; align-items: center; justify-content: space-between; gap: 22px; padding: 22px; margin: 20px 0; border: 1px solid var(--border); }
+.equipment-pack h2 { font-size: 20px; margin: 0 0 8px; }
+.equipment-pack p, .equipment-recovery p { max-width: 640px; line-height: 1.6; margin: 0; }
+.equipment-pack button { flex-shrink: 0; }
+@media (max-width: 1000px) { .equipment-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .equipment-grid { grid-template-columns: 1fr; } .equipment-pack, .equipment-recovery { align-items: stretch; flex-direction: column; padding: 18px; } }

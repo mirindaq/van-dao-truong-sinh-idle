@@ -168,6 +168,13 @@ The browser stores only unresolved breakthrough request payloads in local storag
 After a lost response, use **KIỂM TRA KẾT QUẢ** to recover the existing receipt.
 The saved inventory and game progress remain in PostgreSQL.
 
+Equipment revision `20260917_0005` adds the one-time equipment pack and saved
+equipment slots. Run `.venv\Scripts\python.exe -m alembic upgrade head` before
+using an existing database. Migration preserves old inventory, receipts and
+progress; it does not automatically claim or equip the pack. The pack is
+claimed from Túi Đồ and contains one sword, robe and amulet. Equipping changes
+combat power only; cultivation and breakthrough chance are unchanged.
+
 ## Architecture
 
 Backend follows:

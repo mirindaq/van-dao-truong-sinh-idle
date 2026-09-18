@@ -7,30 +7,10 @@ before broader xianxia systems are added.
 
 | Milestone | Scope | Status |
 |---|---|---|
-| phase-1-core-loop | scopes/phase-1-core-loop.md | open |
-| phase-2-breakthrough-items | scopes/phase-2-breakthrough-items.md | not started |
+| phase-1-core-loop | scopes/phase-1-core-loop.md | closed 2026-09-17 |
+| phase-2-breakthrough-items | scopes/phase-2-breakthrough-items.md | open |
 | phase-3-exploration-battle | scopes/phase-3-exploration-battle.md | not started |
 | phase-4-living-world | scopes/phase-4-living-world.md | not started |
-
-## phase-1-core-loop
-
-Outcome: the player can open the game, create or load a persisted cultivator,
-receive offline cultivation progress, inspect realm/root state, and attempt a
-backend-decided basic breakthrough.
-
-Risk retired: the core idle model, persistence boundary, and backend/frontend
-split are proven before adding wider systems.
-
-Not yet: item-assisted breakthrough, inventory, equipment, alchemy, exploration,
-battle, NPC simulation, pets, dao partners, and complex world events land in
-later milestones.
-
-Human decisions: exact balancing numbers remain adjustable seed data.
-
-Evidence: backend tests prove deterministic idle progress and idempotent
-breakthrough; `/game/state`, `/game/new`, and `/breakthrough/*` support UI-1;
-frontend renders responsive home/cultivation screens without putting
-authoritative game logic in the browser.
 
 ## phase-2-breakthrough-items
 

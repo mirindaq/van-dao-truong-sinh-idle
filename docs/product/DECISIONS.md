@@ -25,15 +25,6 @@ Why: <the reason, in one>
 Recorded in: <file and section> | none — reply only
 -->
 
-## 2026-09-16 — phase-1-core-loop — feature — Basic breakthrough in UI-1
-Decision: Phase 1 includes backend-decided breakthrough preview and attempt for
-minor and major realm advancement, with idempotent request ids and result
-receipts stored through game log metadata.
-Why: UI-1 needs a real breakthrough interaction, and the frontend must not roll
-outcomes or invent consequences.
-Recorded in: PRODUCT.md Source Of Truth; ROADMAP.md phase-1-core-loop;
-scopes/phase-1-core-loop.md Flow, Resilience, Evidence
-
 ## 2026-09-17 — phase-2-breakthrough-items — feature — Persisted breakthrough items
 Decision: Implement the owner's September 16 choices: inventory with owned
 Thanh Mộc Quyết, zero/one pill per breakthrough (+10 percentage points, 95% cap
@@ -44,3 +35,14 @@ Why: Support deliberate preparation while preserving old saves and making retrie
 safe; inventory, outcome and receipt share a transaction and one ownership source.
 Recorded in: PRODUCT.md Core Objects, Source Of Truth, Product Rules;
 scopes/phase-2-breakthrough-items.md Open decisions, Resilience, Evidence
+
+## 2026-09-18 — phase-2-breakthrough-items — feature — One-time equipment pack
+Decision: The equipment branch grants one pack to old and new saves, containing
+one Thanh Trúc Kiếm (+5), one Vải Thô Đạo Bào (+3), and one Thanh Mộc Ngọc Bội
+(+2). Equipping saves one item per slot and adds only its combat bonus; it does
+not alter cultivation or breakthrough chance. Repeated claims and equip actions
+are idempotent, and the saved slot is the source of truth.
+Why: Give the inventory branch a visible, persistent preparation action while
+leaving detailed combat and loot design for Phase 3.
+Recorded in: PRODUCT.md Core Objects, Source Of Truth, Product Rules;
+scopes/phase-2-equipment.md flow, states, resilience, evidence
