@@ -14,7 +14,8 @@ import { EquipmentView } from "./equipment-view";
 import { ExplorationView } from "./exploration-view";
 import { InventoryView } from "./inventory-view";
 import { clearPending, readPending, writePending } from "@/lib/pending-breakthrough";
-import type { BreakthroughRequest, EquipmentSlot, Exploration } from "@/lib/types";
+import type { BreakthroughRequest, EquipmentSlot, Exploration, WorldState } from "@/lib/types";
+import { WorldReportDetails, WorldView } from "./world-view";
 import { clearPendingExploration, readPendingExploration, writePendingExploration } from "@/lib/pending-exploration";
 
 type Modal = "breakthrough" | "settings" | "reveal" | null;
@@ -40,6 +41,7 @@ export function GameHome() {
   const [recovering, setRecovering] = useState(false);
   const [equipmentUncertain, setEquipmentUncertain] = useState(false);
   const [explorationResult, setExplorationResult] = useState<Exploration | null>(null);
+  const [worldState, setWorldState] = useState<WorldState | null>(null);
   const [usePill, setUsePill] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const previewSequence = useRef(0);
@@ -55,6 +57,7 @@ export function GameHome() {
       acceptState(next);
       setEquipmentUncertain(false);
       try { setExplorationResult((await gameApi.latestExploration()).exploration); } catch (e) { if (!(e instanceof GameApiError && e.code === "exploration_not_found")) throw e; }
+      setWorldState(await gameApi.world());
       const pendingExploration = readPendingExploration(next.player.id);
       if (pendingExploration) {
         try {
@@ -123,6 +126,15 @@ export function GameHome() {
     const response = await gameApi.explore(requestId);
     acceptState(response.state); setExplorationResult(response.exploration); clearPendingExploration(state.player.id);
   });
+  const acknowledgeWorld = (id: number) => void execute("world", async () => {
+    await gameApi.acknowledgeWorldReport(id); setWorldState(await gameApi.world());
+  });
+  const loadMoreWorld = () => void execute("world", async () => {
+    if (!worldState?.next_cursor) return;
+    const next = await gameApi.worldEvents(worldState.next_cursor);
+    const known = new Set(worldState.events.map(event => event.id));
+    setWorldState({ ...worldState, events: [...worldState.events, ...next.events.filter(event => !known.has(event.id))], next_cursor: next.next_cursor });
+  });
   const showPreview = () => void execute("preview", async () => {
     setResult(null);
     if (state) {
@@ -171,7 +183,7 @@ export function GameHome() {
 
   if (!state && !noSave) return <main className="opening" style={{ backgroundImage: `url(${assetPath("maps/qingyun_mountain")})` }}><div className="opening-content"><CloudOff size={38} /><p className="eyebrow">VẠN ĐẠO TRƯỜNG SINH</p><h1>Đường về chìm trong sương</h1><p role="alert">{error ?? "Chưa thể tìm lại động phủ của bạn."}</p><button className="primary-button" disabled={!!busy} onClick={() => void execute("load", sync)}><RefreshCw size={18} />{busy ? "Đang tìm lại…" : "THỬ LẠI"}</button></div></main>;
 
-  if (!state) return <main className="opening" style={{ backgroundImage: `url(${assetPath("maps/qingyun_mountain")})` }}><div className="opening-content"><Mountain size={42} /><p className="eyebrow">MỘT ĐỜI PHÀM NHÂN · MỘT NIỆM TRƯỜNG SINH</p><h1>Vạn Đạo<br />Trường Sinh</h1><p>Thiên địa linh khí suy kiệt.</p><p>Bạn vốn là một phàm nhân dưới chân Thanh Vân Sơn. Một ngày lên núi hái thuốc, bạn tìm thấy một động phủ bị dây leo che phủ.</p><p>Sau cánh cửa đá, một con đường chưa từng biết đang chờ…</p><form onSubmit={e => { e.preventDefault(); void execute("new", async () => { try { acceptState(await gameApi.newGame(name.trim())); setModal("reveal"); } catch (e) { if (e instanceof GameApiError && e.code === "save_exists") { await sync(); return; } throw e; } }); }}><label htmlFor="player-name">Danh xưng của đạo hữu</label><input id="player-name" value={name} onChange={e => setName(e.target.value)} maxLength={40} required autoComplete="off" placeholder="Nhập tên nhân vật" disabled={!!busy} /><button className="primary-button" disabled={!!busy || !name.trim()}><Sparkles size={18} />{busy ? "Đang khai mở tiên lộ…" : "BẮT ĐẦU VẤN ĐẠO"}<ArrowRight size={18} /></button></form>{errorBanner}</div></main>;
+  if (!state) return <main className="opening" style={{ backgroundImage: `url(${assetPath("maps/qingyun_mountain")})` }}><div className="opening-content"><Mountain size={42} /><p className="eyebrow">MỘT ĐỜI PHÀM NHÂN · MỘT NIỆM TRƯỜNG SINH</p><h1>Vạn Đạo<br />Trường Sinh</h1><p>Thiên địa linh khí suy kiệt.</p><p>Bạn vốn là một phàm nhân dưới chân Thanh Vân Sơn. Một ngày lên núi hái thuốc, bạn tìm thấy một động phủ bị dây leo che phủ.</p><p>Sau cánh cửa đá, một con đường chưa từng biết đang chờ…</p><form onSubmit={e => { e.preventDefault(); void execute("new", async () => { try { const next = await gameApi.newGame(name.trim()); acceptState(next); setWorldState(await gameApi.world()); setModal("reveal"); } catch (e) { if (e instanceof GameApiError && e.code === "save_exists") { await sync(); return; } throw e; } }); }}><label htmlFor="player-name">Danh xưng của đạo hữu</label><input id="player-name" value={name} onChange={e => setName(e.target.value)} maxLength={40} required autoComplete="off" placeholder="Nhập tên nhân vật" disabled={!!busy} /><button className="primary-button" disabled={!!busy || !name.trim()}><Sparkles size={18} />{busy ? "Đang khai mở tiên lộ…" : "BẮT ĐẦU VẤN ĐẠO"}<ArrowRight size={18} /></button></form>{errorBanner}</div></main>;
 
   const eta = state.cultivation.seconds_until_next_stage === null ? null : Math.max(0, state.cultivation.seconds_until_next_stage - elapsed);
   const offline = state.offline_report;
@@ -180,7 +192,8 @@ export function GameHome() {
     {!modal && !offline && errorBanner}
     {equipmentUncertain && <div className="equipment-recovery" role="status"><p>Chưa xác nhận được thay đổi trang bị. Đồng bộ để xem trạng thái đã lưu trước khi thao tác tiếp.</p><button className="secondary-button" disabled={!!busy} onClick={() => void execute("sync", sync)}>Đồng bộ trang bị</button></div>}
     {disconnected && <p className="connection-note" role="status">Đang hiển thị lần lưu gần nhất. Tu vi sẽ được đồng bộ khi kết nối trở lại.</p>}
-    {view === "home" || view === "cultivation" ? <CultivationView state={state} detailed={view === "cultivation"} eta={eta} navigate={navigate} onBreakthrough={showPreview} busy={!!busy} /> : view === "exploration" ? <ExplorationView state={state} result={explorationResult} busy={!!busy} onExplore={explore} /> : view === "character" ? <CharacterView state={state} navigate={navigate} /> : view === "inventory" ? <InventoryView state={state} navigate={navigate} onClaim={() => updateEquipment(gameApi.claimEquipment)} disabled={!!busy || equipmentUncertain} /> : view === "skills" ? <SkillsView state={state} navigate={navigate} /> : view === "equipment" ? <EquipmentView state={state} navigate={navigate} onEquip={equip} disabled={!!busy || equipmentUncertain} /> : view === "journal" ? <section className="journal-page"><div className="page-heading"><div><p className="eyebrow">DẤU CHÂN TRÊN TIÊN LỘ</p><h1>Nhật Ký</h1></div><span>Ghi chép gần đây</span></div><GameTimeline logs={state.recent_logs} /></section> : <section className="locked-page" style={{ backgroundImage: `url(${assetPath("maps/qingyun_mountain")})` }}><selected.icon size={40} /><p className="eyebrow">TIÊN DUYÊN CHƯA TỚI</p><h1>{selected.name}</h1><span className="locked-tag"><LockKeyhole size={14} />Chưa mở</span><p>{view === "pets" ? "Bạn chưa ký khế ước với bất kỳ linh thú nào." : view === "partner" ? "Tiên lộ dài đằng đẵng. Hiện tại chưa có người cùng bạn đồng hành." : view === "rift" ? "Sau màn sương, một cánh cửa cổ vẫn đang ngủ yên." : "Một chương mới trên tiên lộ vẫn còn đang khép lại."}</p><button className="secondary-button" onClick={() => navigate("cultivation")}><Leaf size={17} />Trở về tu luyện<ArrowRight size={16} /></button></section>}
+    {!modal && !offline && view !== "world" && worldState?.report && <section className="world-report" aria-label="Trong lúc bạn vắng mặt"><div><p className="eyebrow">TRONG LÚC BẠN VẮNG MẶT</p><h2>Thiên hạ đã chuyển mình</h2><WorldReportDetails report={worldState.report} /></div><div className="world-report-actions"><button className="secondary-button" onClick={() => navigate("world")}><ArrowRight size={16} />XEM THIÊN HẠ</button><button className="secondary-button" disabled={!!busy} onClick={() => acknowledgeWorld(worldState.report!.id)}><Check size={16} />ĐÃ ĐỌC</button></div></section>}
+    {view === "home" || view === "cultivation" ? <CultivationView state={state} detailed={view === "cultivation"} eta={eta} navigate={navigate} onBreakthrough={showPreview} busy={!!busy} /> : view === "exploration" ? <ExplorationView state={state} result={explorationResult} busy={!!busy} onExplore={explore} /> : view === "world" ? <WorldView world={worldState} busy={!!busy} onSync={() => void execute("sync", sync)} onAcknowledge={acknowledgeWorld} onLoadMore={loadMoreWorld} /> : view === "character" ? <CharacterView state={state} navigate={navigate} /> : view === "inventory" ? <InventoryView state={state} navigate={navigate} onClaim={() => updateEquipment(gameApi.claimEquipment)} disabled={!!busy || equipmentUncertain} /> : view === "skills" ? <SkillsView state={state} navigate={navigate} /> : view === "equipment" ? <EquipmentView state={state} navigate={navigate} onEquip={equip} disabled={!!busy || equipmentUncertain} /> : view === "journal" ? <section className="journal-page"><div className="page-heading"><div><p className="eyebrow">DẤU CHÂN TRÊN TIÊN LỘ</p><h1>Nhật Ký</h1></div><span>Ghi chép gần đây</span></div><GameTimeline logs={state.recent_logs} /></section> : <section className="locked-page" style={{ backgroundImage: `url(${assetPath("maps/qingyun_mountain")})` }}><selected.icon size={40} /><p className="eyebrow">TIÊN DUYÊN CHƯA TỚI</p><h1>{selected.name}</h1><span className="locked-tag"><LockKeyhole size={14} />Chưa mở</span><p>{view === "pets" ? "Bạn chưa ký khế ước với bất kỳ linh thú nào." : view === "partner" ? "Tiên lộ dài đằng đẵng. Hiện tại chưa có người cùng bạn đồng hành." : view === "rift" ? "Sau màn sương, một cánh cửa cổ vẫn đang ngủ yên." : "Một chương mới trên tiên lộ vẫn còn đang khép lại."}</p><button className="secondary-button" onClick={() => navigate("cultivation")}><Leaf size={17} />Trở về tu luyện<ArrowRight size={16} /></button></section>}
     {modal === "reveal" && <GameModal title="Trắc Linh Thạch"><div className="reveal-stone"><Leaf size={55} /></div><p className="center muted">Linh thạch khẽ sáng. Một luồng sinh khí lan tỏa.</p><SpiritualRootBadge root={state.spiritual_root} /><StatRow label="Hệ số tu luyện" value={`×${number(state.spiritual_root.cultivation_modifier, 2)}`} /><StatRow label="Hệ số đột phá" value={`×${number(state.spiritual_root.breakthrough_modifier, 2)}`} /><button className="primary-button full-width" onClick={() => { closeModal(); navigate("home"); }}>BƯỚC VÀO TIÊN LỘ<ArrowRight size={18} /></button></GameModal>}
     {modal === "breakthrough" && preview && <GameModal title={result ? result.success ? "Đột phá thành công" : "Đột phá thất bại" : "Đột phá cảnh giới"} onClose={closeModal} busy={!!busy}>
       {result ? <div className={`breakthrough-result ${result.success ? "success" : "failure"}`}>

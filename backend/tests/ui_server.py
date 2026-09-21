@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from fastapi import FastAPI
-from sqlalchemy import delete, text
+from sqlalchemy import delete, select, text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from app.api.dependencies import get_session
@@ -19,6 +19,8 @@ from app.repositories.inventory_repository import InventoryRepository
 from app.repositories.player_repository import PlayerRepository
 from app.services import game_state_service
 from app.services.game_state_service import GameStateService
+from app.models.world import WorldState
+from app.services.world_service import WorldService
 
 schema = "test_browser_" + uuid4().hex
 engine = create_async_engine(settings.database_url, connect_args={"server_settings": {"search_path": schema}})
@@ -70,6 +72,11 @@ async def prepare(mode: str):
             if mode == "offline":
                 player.last_cultivation_at = datetime.now(timezone.utc) - timedelta(hours=8)
             await session.commit()
+            if mode == "world-offline":
+                await WorldService(session).get_state()
+                world = await session.scalar(select(WorldState))
+                world.last_simulated_at = datetime.now(timezone.utc) - timedelta(hours=2)
+                await session.commit()
     seed = 2 if mode == "failure" else 1
     game_state_service.RandomService = lambda: RandomService(seed=seed)
     return {"ready": True}

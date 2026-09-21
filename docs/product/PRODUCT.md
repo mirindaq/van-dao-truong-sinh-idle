@@ -29,8 +29,12 @@ the world feel alive without click-heavy play.
   not leave inventory; total combat power is the player base value plus the
   bonuses of equipped items. Equip/unequip does not change cultivation or
   breakthrough chance.
-- NPC, pet, alchemy, exploration, battle, and
-  relationship objects are planned but not in Phase 1.
+- NPC: a saved simulated cultivator with realm progress, activity, location,
+  injury state and an event history; identity is save plus stable NPC key.
+- World state: one per save, with a deterministic seed, rules version and the
+  last processed 10-minute tick. World events and unread return reports derive
+  from its committed ticks.
+- Pet, alchemy and relationship objects remain planned.
 
 ## Source Of Truth
 
@@ -49,6 +53,9 @@ the world feel alive without click-heavy play.
   service metadata on game logs.
 - Frontend state is display-only. Backend actions decide random rolls, rewards,
   progression, and persistence.
+- NPC state, world time, world events and return reports are decided by
+  PostgreSQL. Opening or syncing advances them under the same single-save lock;
+  browser time and browser storage never advance the world.
 
 ## Product Rules
 
@@ -81,6 +88,12 @@ the world feel alive without click-heavy play.
   defeat awards nothing but keeps the battle log. Seeded battle randomness is
   replayable, and a request id replays the stored result without a second
   battle or reward.
+- The living world advances in deterministic 10-minute ticks when read, without
+  a background worker. One return processes at most 144 ticks (24 hours) and
+  permanently skips older full ticks while preserving the remaining fraction.
+- Phase 4 starts Tạ Vô Trần, Lạc Thanh Hàn and one unnamed wanderer exactly once
+  per save. Their cultivation, expeditions, opportunities and injuries affect
+  only NPC state and world news; they never grant player loot, buffs or debuffs.
 
 ## Access And Money
 

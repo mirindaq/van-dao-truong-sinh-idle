@@ -58,6 +58,23 @@ export type Exploration = {
 };
 export type ExplorationResponse = { state: GameState; exploration: Exploration };
 
+export type WorldNpc = {
+  key: string; name: string; description: string; spiritual_root: string;
+  realm_key: string; realm_name: string; stage: number; cultivation_exp: number;
+  required_exp: number; activity: "cultivating" | "exploring" | "injured";
+  location: string; portrait_key: string | null; injured_until: string | null; updated_at: string;
+};
+export type WorldEvent = { id: number; kind: string; source_key: string; message: string; occurred_at: string };
+export type WorldReport = {
+  id: number; started_at: string; ended_at: string; processed_ticks: number; skipped_seconds: number;
+  event_count: number; npc_updates: number; summary: Record<string, number>; pending: boolean;
+};
+export type WorldState = {
+  updated_at: string; tick_minutes: number; max_offline_hours: number;
+  npcs: WorldNpc[]; events: WorldEvent[]; next_cursor: number | null; report: WorldReport | null;
+};
+export type WorldEventPage = { events: WorldEvent[]; next_cursor: number | null };
+
 export type InventoryItem = {
   key: string; name: string; category: string; description: string; asset_key: string; quantity: number;
   equipment_slot: EquipmentSlot | null; combat_bonus: number;

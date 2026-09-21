@@ -180,6 +180,12 @@ persistent battle logs. Run `alembic upgrade head` before using it. A victory
 awards 10 Linh Thạch and 1 Tụ Khí Đan; the same request id is safe to retry and
 does not battle or reward twice. Defeat saves its log without a reward.
 
+Living-world revision `20260918_0007` adds saved NPC state, deterministic
+10-minute simulation ticks, world news and return reports. Existing saves
+initialize Tạ Vô Trần, Lạc Thanh Hàn and one wanderer on their first world read;
+no events are backfilled from before initialization. A return processes at most
+24 hours, and world events do not change player resources.
+
 ## Architecture
 
 Backend follows:

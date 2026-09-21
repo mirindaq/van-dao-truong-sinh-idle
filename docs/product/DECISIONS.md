@@ -25,11 +25,5 @@ Why: <the reason, in one>
 Recorded in: <file and section> | none — reply only
 -->
 
-## 2026-09-18 — phase-3-exploration-battle — feature — Immediate Thanh Vân Sơn run
-Decision: The first exploration location resolves immediately. A victory awards
-10 Linh Thạch and 1 Tụ Khí Đan; defeat awards nothing but preserves its battle
-log. Seeded battle snapshots and request ids make the result replayable.
-Why: Prove exploration, auto turn-based combat, loot persistence and recovery
-before adding timers, more locations or world simulation.
-Recorded in: PRODUCT.md Core Objects and Product Rules;
-scopes/phase-3-exploration-battle.md Open decisions, Flow, Resilience, Evidence
+Phase 3 entries are archived in decisions/phase-3-exploration-battle.md.
+Phase 4 entries are archived in decisions/phase-4-living-world.md.

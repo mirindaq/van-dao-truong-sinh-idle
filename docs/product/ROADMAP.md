@@ -10,37 +10,7 @@ before broader xianxia systems are added.
 | phase-1-core-loop | scopes/phase-1-core-loop.md | closed 2026-09-17 |
 | phase-2-breakthrough-items | scopes/phase-2-breakthrough-items.md | closed 2026-09-18 |
 | phase-3-exploration-battle | scopes/phase-3-exploration-battle.md | closed 2026-09-18 |
-| phase-4-living-world | scopes/phase-4-living-world.md | not started |
-
-## phase-3-exploration-battle
-
-Outcome: the player can explore a location, resolve auto turn-based battle, and
-receive logged rewards.
-
-Risk retired: opportunity, battle log, and loot systems work without realtime
-combat.
-
-Not yet: autonomous NPC world changes land in `phase-4-living-world`.
-
-Human decisions: first location reward tables.
-
-Evidence: battle engine is pure and replayable; exploration saves result and
-logs.
-
-## phase-4-living-world
-
-Outcome: NPCs and world events advance from timestamps and appear in world logs
-while the player is offline.
-
-Risk retired: the game world feels alive without background workers.
-
-Not yet: multiplayer, PvP, WebSocket, and external job systems are dropped until
-the owner asks for them.
-
-Human decisions: which named NPCs receive portraits and story priority.
-
-Evidence: NPC simulation advances from elapsed time; world log contains notable
-events after offline gaps.
+| phase-4-living-world | scopes/phase-4-living-world.md | closed 2026-09-21 |
 
 ## Dropped
 

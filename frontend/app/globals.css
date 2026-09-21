@@ -380,3 +380,42 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *:before, htm
 .battle-log small { color: var(--muted); }
 .exploration-empty { margin: 24px 0; }
 @media (max-width: 600px) { .exploration-location, .exploration-result { align-items: stretch; flex-direction: column; padding: 18px; } .exploration-location > button { width: 100%; } .battle-log li { grid-template-columns: 1fr; gap: 2px; } }
+
+/* Living world */
+.world-report { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px; margin-bottom: 28px; border: 1px solid var(--gold); background: linear-gradient(120deg, #2b2a21, var(--surface)); }
+.world-report h2 { margin: 5px 0 8px; color: var(--gold-bright); }
+.world-report p { color: var(--secondary); }
+.world-report small { display: block; color: var(--danger); margin-top: 7px; }
+.world-report-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.npc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 34px; }
+.npc-card { min-width: 0; display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 18px; align-items: center; padding: 18px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left; }
+.npc-card:hover { border-color: var(--gold); background: var(--surface-raised); }
+.npc-card img { width: 92px; height: 112px; object-fit: contain; background: #0b100f88; }
+.npc-card h3 { margin: 6px 0 3px; color: var(--gold-bright); }
+.npc-card p { color: var(--secondary); font-size: 12px; }
+.npc-card small, .world-event-list small { display: flex; align-items: center; gap: 5px; color: var(--muted); margin-top: 9px; }
+.npc-state { display: inline-flex; color: var(--jade); font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
+.npc-state.injured { color: var(--danger); }
+.npc-state.exploring { color: var(--gold); }
+.world-news { padding: 22px; border: 1px solid var(--line); background: #0b100f45; margin-bottom: 26px; }
+.world-filters { display: flex; gap: 7px; margin-bottom: 18px; }
+.world-filters button, .back-button { min-height: 36px; padding: 7px 13px; border: 1px solid var(--line); background: transparent; color: var(--secondary); }
+.world-filters button.active { border-color: var(--gold); color: var(--gold-bright); background: var(--surface-raised); }
+.world-event-list { list-style: none; margin: 0; padding: 0; }
+.world-event-list li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.world-event-list li:last-child { border-bottom: 0; }
+.event-mark { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--jade-dark); color: var(--jade); }
+.world-no-news { padding: 22px 0; text-align: center; }
+.world-more { margin: 18px auto 0; display: flex; }
+.world-empty { min-height: 360px; display: grid; place-items: center; align-content: center; gap: 18px; border: 1px dashed var(--line); color: var(--secondary); }
+.world-empty svg { color: var(--gold); }
+.back-button { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+.npc-profile-hero { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 30px; padding: 28px; border: 1px solid var(--line); background: var(--surface); }
+.npc-profile-hero > img { width: 220px; height: 285px; object-fit: contain; background: var(--ink-deep); }
+.npc-profile-hero h1 { color: var(--gold-bright); margin: 8px 0 13px; }
+.npc-profile-hero p:not(.eyebrow) { color: var(--secondary); max-width: 620px; }
+.npc-facts { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 22px; }
+.npc-facts span { padding: 7px 10px; border: 1px solid var(--line); color: var(--jade); font-size: 11px; }
+.npc-progress { padding: 22px 0 30px; }
+@media (max-width: 1000px) { .npc-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 650px) { .world-report { align-items: stretch; flex-direction: column; padding: 18px; } .npc-grid { grid-template-columns: 1fr; } .npc-card { grid-template-columns: 70px minmax(0, 1fr); padding: 14px; } .npc-card img { width: 70px; height: 88px; } .npc-profile-hero { grid-template-columns: 1fr; padding: 18px; } .npc-profile-hero > img { width: 100%; height: 210px; } .world-news { padding: 16px; } }

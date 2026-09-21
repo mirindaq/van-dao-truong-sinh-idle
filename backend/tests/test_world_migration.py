@@ -1,0 +1,61 @@
+from datetime import datetime, timedelta, timezone
+from uuid import uuid4
+
+import pytest
+from alembic import command
+from alembic.config import Config
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+from app.core.config import settings
+from app.services.world_service import WorldService
+
+
+def upgrade(connection, revision):
+    config = Config("alembic.ini"); config.attributes["connection"] = connection
+    command.upgrade(config, revision)
+
+
+@pytest.mark.asyncio
+async def test_existing_schema_upgrades_and_redeploy_is_idempotent():
+    schema = "test_world_migration_" + uuid4().hex
+    admin = create_async_engine(settings.database_url)
+    async with admin.begin() as connection:
+        await connection.execute(text(f'CREATE SCHEMA "{schema}"'))
+    engine = create_async_engine(settings.database_url, connect_args={"server_settings": {"search_path": schema}})
+    try:
+        async with engine.begin() as connection:
+            await connection.run_sync(upgrade, "20260918_0006")
+            await connection.execute(text("""INSERT INTO realms
+                (id,key,name,rank_order,max_stage,base_required_exp,growth_factor)
+                VALUES (1,'qi_refining','Luyện Khí',1,9,120,1.45)"""))
+            await connection.execute(text("""INSERT INTO spiritual_roots
+                (id,key,name,elements,quality,cultivation_modifier,breakthrough_modifier)
+                VALUES (1,'wood_common','Mộc Linh Căn',ARRAY['wood'],'common',1.08,1.02)"""))
+            await connection.execute(text("""INSERT INTO players
+                (name,realm_id,spiritual_root_id,stage,cultivation_exp,spirit_stones,combat_power,
+                 equipment_pack_claimed,manual_key,current_activity,last_cultivation_at)
+                VALUES ('Thanh Vân',1,1,2,45,17,12,false,'manual/qing_mu_jue','cultivating',now())"""))
+            await connection.run_sync(upgrade, "head")
+        sessions = async_sessionmaker(engine, expire_on_commit=False)
+        start = datetime(2026, 9, 18, tzinfo=timezone.utc)
+        async with sessions() as session:
+            initial = await WorldService(session, now=start).get_state()
+            assert len(initial.npcs) == 3
+        async with sessions() as session:
+            advanced = await WorldService(session, now=start + timedelta(hours=3)).get_state()
+            assert advanced.report is not None and advanced.report.processed_ticks == 18
+        await engine.dispose()
+        engine = create_async_engine(settings.database_url, connect_args={"server_settings": {"search_path": schema}})
+        async with engine.begin() as connection:
+            await connection.run_sync(upgrade, "head")
+            assert (await connection.execute(text("SELECT version_num FROM alembic_version"))).scalar() == "20260918_0007"
+            assert (await connection.execute(text("SELECT total_ticks FROM world_states"))).scalar() == 18
+            assert (await connection.execute(text("SELECT count(*) FROM world_npcs"))).scalar() == 3
+            assert (await connection.execute(text("SELECT count(*) FROM world_reports"))).scalar() == 1
+            assert (await connection.execute(text("SELECT count(*) FROM world_events"))).scalar() > 0
+    finally:
+        await engine.dispose()
+        async with admin.begin() as connection:
+            await connection.execute(text(f'DROP SCHEMA "{schema}" CASCADE'))
+        await admin.dispose()
