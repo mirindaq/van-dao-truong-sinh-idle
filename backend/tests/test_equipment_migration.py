@@ -17,14 +17,18 @@ async def test_upgrade_existing_inventory_then_claim_equip_and_redeploy():
     try:
         async with engine.begin() as connection:
             await connection.run_sync(upgrade, '20260916_0004')
-            await connection.execute(text("""INSERT INTO realms (id,key,name,rank_order,max_stage,base_required_exp,growth_factor)
-                VALUES (1,'qi_refining','Luyện Khí',1,9,120,1.45)"""))
-            await connection.execute(text("""INSERT INTO spiritual_roots (id,key,name,elements,quality,cultivation_modifier,breakthrough_modifier)
-                VALUES (1,'wood_common','Mộc Linh Căn',ARRAY['wood'],'common',1.08,1.02)"""))
-            await connection.execute(text("""INSERT INTO players (id,name,realm_id,spiritual_root_id,stage,cultivation_exp,spirit_stones,
+            await connection.execute(text("""INSERT INTO realms (key,name,rank_order,max_stage,base_required_exp,growth_factor)
+                VALUES ('qi_refining','Luyện Khí',1,9,120,1.45)"""))
+            await connection.execute(text("""INSERT INTO spiritual_roots (key,name,elements,quality,cultivation_modifier,breakthrough_modifier)
+                VALUES ('wood_common','Mộc Linh Căn',ARRAY['wood'],'common',1.08,1.02)"""))
+            await connection.execute(text("""INSERT INTO players (name,realm_id,spiritual_root_id,stage,cultivation_exp,spirit_stones,
                 combat_power,manual_key,current_activity,last_cultivation_at)
-                VALUES (1,'Thanh Vân',1,1,2,45,17,23,'manual/qing_mu_jue','cultivating',now()+interval '1 hour')"""))
-            await connection.execute(text("""INSERT INTO owned_items VALUES (1,'items/qi_gathering_pill',2),(1,'manual/qing_mu_jue',1)"""))
+                VALUES ('Thanh Vân',(SELECT id FROM realms WHERE key='qi_refining'),
+                    (SELECT id FROM spiritual_roots WHERE key='wood_common'),
+                    2,45,17,23,'manual/qing_mu_jue','cultivating',now()+interval '1 hour')"""))
+            await connection.execute(text("""INSERT INTO owned_items
+                VALUES ((SELECT id FROM players),'items/qi_gathering_pill',2),
+                       ((SELECT id FROM players),'manual/qing_mu_jue',1)"""))
             await connection.execute(text("""INSERT INTO game_logs (scope,message,metadata) VALUES ('breakthrough','legacy','{"receipt":"preserved"}')"""))
             await connection.run_sync(upgrade, 'head')
         sessions = async_sessionmaker(engine, expire_on_commit=False)

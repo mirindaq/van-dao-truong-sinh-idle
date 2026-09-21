@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+from app.core.game_rules import game_rules
 from app.game.world import NpcSnapshot, WorldEngine
 
 
@@ -63,4 +64,24 @@ def test_npc_at_final_realm_cap_keeps_cultivating_without_breakthrough():
     capped = npc(realm_key="human_immortal", stage=9, cultivation_exp=engine.required_exp(9, "human_immortal"), cultivation_rate=6)
     result = engine.advance_npc(capped, 3, now, 12)
     assert (result.npc.realm_key, result.npc.stage) == ("human_immortal", 9)
+
+
+def test_world_engine_uses_injected_timing_and_outcome_rules():
+    rules = game_rules.model_copy(update={
+        "world_tick_minutes": 5,
+        "world_max_offline_hours": 2,
+        "world_explore_safe_chance": 1,
+        "world_explore_opportunity_chance": 0,
+        "world_explore_injury_chance": 0,
+        "world_event_chance": 0,
+    })
+    engine = WorldEngine(rules)
+
+    result = engine.advance_npc(npc(activity="exploring"), 1, datetime.now(timezone.utc), 99)
+
+    assert engine.tick_minutes == 5
+    assert engine.max_ticks == 24
+    assert result.npc.activity == "cultivating"
+    assert result.npc.injured_until is None
+    assert engine.world_event(1, 99) is None
     assert not any(event["kind"].startswith("breakthrough") for event in result.events)

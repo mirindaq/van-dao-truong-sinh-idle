@@ -37,6 +37,8 @@ class WorldReportRead(BaseModel):
     skipped_seconds: int
     event_count: int
     npc_updates: int
+    rules_version: int
+    rules_fingerprint: str
     summary: dict[str, int]
     pending: bool
 
@@ -45,6 +47,8 @@ class WorldRead(BaseModel):
     updated_at: datetime
     tick_minutes: int
     max_offline_hours: int
+    rules_version: int
+    rules_fingerprint: str
     npcs: list[WorldNpcRead]
     events: list[WorldEventRead]
     next_cursor: int | None

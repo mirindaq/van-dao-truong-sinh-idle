@@ -1,4 +1,6 @@
 export type GameState = {
+  rules_version: number;
+  rules_fingerprint: string;
   player: {
     id: number;
     name: string;
@@ -42,7 +44,10 @@ export type GameState = {
     created_at: string;
   }>;
   server_time: string;
-  offline_report: { id: number; elapsed_seconds: number; earned_exp: number } | null;
+  offline_report: {
+    id: number; elapsed_seconds: number; earned_exp: number;
+    rules_version: number; rules_fingerprint: string;
+  } | null;
   breakthrough: BreakthroughPreview;
   inventory: InventoryItem[];
   equipment: Array<{ slot: EquipmentSlot; item_key: string }>;
@@ -54,6 +59,7 @@ export type Exploration = {
   id: number; request_id: string; location_key: string; state: "resolving" | "victory" | "defeat" | "empty";
   message: string; victory: boolean | null; reward_stones: number; reward_pills: number;
   battle_log: Array<{ turn: number; actor: string; damage: number; target_hp: number }>;
+  rules_version: number; rules_fingerprint: string;
   created_at: string;
 };
 export type ExplorationResponse = { state: GameState; exploration: Exploration };
@@ -67,10 +73,12 @@ export type WorldNpc = {
 export type WorldEvent = { id: number; kind: string; source_key: string; message: string; occurred_at: string };
 export type WorldReport = {
   id: number; started_at: string; ended_at: string; processed_ticks: number; skipped_seconds: number;
-  event_count: number; npc_updates: number; summary: Record<string, number>; pending: boolean;
+  event_count: number; npc_updates: number; rules_version: number; rules_fingerprint: string;
+  summary: Record<string, number>; pending: boolean;
 };
 export type WorldState = {
   updated_at: string; tick_minutes: number; max_offline_hours: number;
+  rules_version: number; rules_fingerprint: string;
   npcs: WorldNpc[]; events: WorldEvent[]; next_cursor: number | null; report: WorldReport | null;
 };
 export type WorldEventPage = { events: WorldEvent[]; next_cursor: number | null };
@@ -106,5 +114,7 @@ export type BreakthroughResult = {
   cultivation_lost: number;
   items_consumed: number;
   final_chance: number | null;
+  rules_version: number;
+  rules_fingerprint: string;
   realm: Realm;
 };

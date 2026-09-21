@@ -1,5 +1,6 @@
 from app.game.breakthrough import BreakthroughEngine
 from app.game.random_service import RandomService
+from app.core.game_rules import game_rules
 
 
 def test_odds_and_failure_cost():
@@ -18,6 +19,13 @@ def test_seeded_success_and_failure():
 
 def test_chance_is_bounded():
     assert BreakthroughEngine().preview(major=False, root_modifier=5, required_exp=120).total == 1
+
+
+def test_breakthrough_uses_injected_rules():
+    rules = game_rules.model_copy(update={"breakthrough_minor_chance": .2, "breakthrough_failure_loss": .25})
+    odds = BreakthroughEngine(rules).preview(major=False, root_modifier=1, required_exp=200)
+    assert odds.base == .2
+    assert odds.failure_loss == 50
 import pytest
 
 

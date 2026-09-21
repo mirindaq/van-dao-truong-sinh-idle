@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from sqlalchemy import func, select
 
+from app.core.game_rules import game_rules
 from app.models.world import WorldEvent, WorldNpc, WorldReport, WorldState
 from app.services.world_service import WorldService
 from tests.test_game_api import game  # noqa: F401
@@ -16,10 +17,60 @@ async def test_world_initializes_once_without_past_events(game):
     second = (await client.get("/world/state")).json()
     assert [npc["name"] for npc in first["npcs"]] == ["Tạ Vô Trần", "Lạc Thanh Hàn", "Tán Tu Vô Danh"]
     assert first["events"] == [] and first["report"] is None
+    assert first["rules_version"] == game_rules.rules_version
+    assert first["rules_fingerprint"] == game_rules.fingerprint
     assert second["updated_at"] == first["updated_at"]
     async with sessions() as session:
         assert await session.scalar(select(func.count()).select_from(WorldState)) == 1
         assert await session.scalar(select(func.count()).select_from(WorldNpc)) == 3
+
+
+async def test_world_rule_change_only_affects_future_ticks_and_keeps_old_report(game):
+    client, sessions = game
+    await client.post("/game/new", json={"name": "Quan Sơn"})
+    start = datetime(2026, 9, 21, tzinfo=timezone.utc)
+    async with sessions() as session:
+        initial = await WorldService(session, now=start).get_state()
+        world = await session.scalar(select(WorldState))
+        original_rates = {
+            npc.key: npc.cultivation_rate
+            for npc in (await session.scalars(select(WorldNpc))).all()
+        }
+        assert initial.report is None
+        first = await WorldService(session, now=start + timedelta(minutes=10)).get_state()
+        first_report_id = first.report.id
+        first_report_fingerprint = first.report.rules_fingerprint
+
+    boosted_npcs = dict(game_rules.npc_rules)
+    boosted_npcs["xie_wuchen"] = boosted_npcs["xie_wuchen"].model_copy(
+        update={"cultivation_rate": 999}
+    )
+    new_rules = game_rules.model_copy(update={
+        "rules_version": game_rules.rules_version + 1,
+        "world_cultivate_continue_chance": 1,
+        "npc_rules": boosted_npcs,
+    })
+    async with sessions() as session:
+        current = await WorldService(
+            session,
+            now=start + timedelta(minutes=20),
+            rules=new_rules,
+        ).get_state()
+        old_report = await session.get(WorldReport, first_report_id)
+        current_rates = {
+            npc.key: npc.cultivation_rate
+            for npc in (await session.scalars(select(WorldNpc))).all()
+        }
+        world = await session.scalar(select(WorldState))
+
+    assert current.rules_version == new_rules.rules_version
+    assert current.rules_fingerprint == new_rules.fingerprint
+    assert current.report.rules_version == new_rules.rules_version
+    assert current.report.rules_fingerprint == new_rules.fingerprint
+    assert old_report.rules_fingerprint == first_report_fingerprint
+    assert old_report.processed_ticks == 1
+    assert current_rates == original_rates
+    assert world.total_ticks == 2
 
 
 async def test_world_advances_once_concurrently_and_report_ack_is_idempotent(game):

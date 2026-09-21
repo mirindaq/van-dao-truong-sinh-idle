@@ -4,8 +4,9 @@ from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 from hashlib import sha256
 
+from app.core.game_rules import GameRules, game_rules
 from app.game.breakthrough import BreakthroughEngine
-from app.game.data.realms import REALM_DEFINITIONS, required_exp_for_stage
+from app.game.data.realms import realm_definitions, required_exp_for_stage
 from app.game.random_service import RandomService
 
 
@@ -29,18 +30,19 @@ class TickResult:
 
 
 class WorldEngine:
-    tick_minutes = 10
-    max_ticks = 144
-
     @staticmethod
     def _rng(seed: int, tick_index: int, source: str) -> RandomService:
         digest = sha256(f"{seed}:{tick_index}:{source}".encode()).digest()
         return RandomService(int.from_bytes(digest[:8], "big"))
 
-    def __init__(self) -> None:
-        self.breakthrough = BreakthroughEngine()
-        self.realms = {realm["key"]: realm for realm in REALM_DEFINITIONS}
-        self.realm_order = sorted(REALM_DEFINITIONS, key=lambda realm: realm["rank_order"])
+    def __init__(self, rules: GameRules = game_rules) -> None:
+        self.rules = rules
+        self.tick_minutes = rules.world_tick_minutes
+        self.max_ticks = rules.world_max_offline_hours * 60 // rules.world_tick_minutes
+        self.breakthrough = BreakthroughEngine(rules)
+        definitions = realm_definitions(rules)
+        self.realms = {realm["key"]: realm for realm in definitions}
+        self.realm_order = sorted(definitions, key=lambda realm: realm["rank_order"])
 
     def required_exp(self, stage: int, realm_key: str = "qi_refining") -> int:
         realm = self.realms[realm_key]
@@ -84,15 +86,15 @@ class WorldEngine:
 
         if current.activity == "exploring":
             outcome = rng.roll()
-            if outcome < .6:
+            if outcome < self.rules.world_explore_safe_chance:
                 current = replace(current, activity="cultivating", location="Thanh Vân Sơn")
-            elif outcome < .85:
-                gained = self.required_exp(current.stage, current.realm_key) * .1
+            elif outcome < self.rules.world_explore_safe_chance + self.rules.world_explore_opportunity_chance:
+                gained = self.required_exp(current.stage, current.realm_key) * self.rules.world_opportunity_gain
                 current = replace(current, activity="cultivating", location="Thanh Vân Sơn",
                                   cultivation_exp=current.cultivation_exp + gained)
                 events.append(self._event("opportunity", current, f"{current.name} tìm được một cơ duyên nhỏ."))
             else:
-                current = replace(current, activity="injured", injured_until=tick_time + timedelta(hours=1))
+                current = replace(current, activity="injured", injured_until=tick_time + timedelta(hours=self.rules.world_injury_hours))
                 events.append(self._event("injured", current, f"{current.name} bị thương khi thám du."))
                 return TickResult(current, tuple(events))
             current = self._attempt_breakthrough(current, rng, events)
@@ -100,13 +102,13 @@ class WorldEngine:
 
         current = replace(current, cultivation_exp=current.cultivation_exp + current.cultivation_rate)
         current = self._attempt_breakthrough(current, rng, events)
-        if rng.roll() >= .8:
+        if rng.roll() >= self.rules.world_cultivate_continue_chance:
             current = replace(current, activity="exploring", location="Ngoại vi Thanh Vân Sơn")
         return TickResult(current, tuple(events))
 
     def world_event(self, tick_index: int, seed: int) -> dict | None:
         rng = self._rng(seed, tick_index, "world")
-        if rng.roll() >= .05:
+        if rng.roll() >= self.rules.world_event_chance:
             return None
         kind, message = rng.choice((
             ("spiritual_tide", "Linh khí quanh Thanh Vân Sơn chợt hội tụ."),

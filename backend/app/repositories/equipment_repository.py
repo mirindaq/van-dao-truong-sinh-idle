@@ -1,7 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.game.data.equipment import EQUIPMENT_DEFINITIONS
 from app.models.item import EquippedItem, Item, OwnedItem
 
 
@@ -9,17 +8,17 @@ class EquipmentRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def claim(self, player_id: int):
-        for definition in EQUIPMENT_DEFINITIONS:
+    async def claim(self, player_id: int, definitions: list[dict], quantity: int):
+        for definition in definitions:
             if await self.session.get(Item, definition['key']) is None:
                 self.session.add(Item(**definition))
         await self.session.flush()
-        for definition in EQUIPMENT_DEFINITIONS:
+        for definition in definitions:
             owned = await self.session.get(OwnedItem, (player_id, definition['key']))
             if owned is None:
-                self.session.add(OwnedItem(player_id=player_id, item_key=definition['key'], quantity=1))
+                self.session.add(OwnedItem(player_id=player_id, item_key=definition['key'], quantity=quantity))
             else:
-                owned.quantity += 1
+                owned.quantity += quantity
         await self.session.flush()
 
     async def list(self, player_id: int) -> list[EquippedItem]:

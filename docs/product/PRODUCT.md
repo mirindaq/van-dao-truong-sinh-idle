@@ -43,8 +43,8 @@ the world feel alive without click-heavy play.
 - Item quantities are decided only by `owned_items`, keyed by player and item.
   The compatibility player pill count in API responses is derived from inventory.
 - Equipped slots and the one-time equipment-pack claim are decided by
-  PostgreSQL. The pack grants one Thanh Trúc Kiếm, one Vải Thô Đạo Bào and one
-  Thanh Mộc Ngọc Bội to old and new saves, and repeated claims grant nothing.
+  PostgreSQL. The pack grants the configured quantity of Thanh Trúc Kiếm, Vải
+  Thô Đạo Bào and Thanh Mộc Ngọc Bội; repeated claims grant nothing.
 - Realm progression is decided by seeded realm records, not hard-coded branches
   scattered through the app.
 - Offline progress is decided by stored UTC timestamps and applied when state is
@@ -56,22 +56,29 @@ the world feel alive without click-heavy play.
 - NPC state, world time, world events and return reports are decided by
   PostgreSQL. Opening or syncing advances them under the same single-save lock;
   browser time and browser storage never advance the world.
+- A typed game-rules object loaded from environment is the source of runtime
+  gameplay parameters. PostgreSQL remains the source of committed state and
+  receipts; changing rules never rewrites a historical result.
+- PostgreSQL registers each rules version with exactly one fingerprint before
+  the backend accepts requests. A changed fingerprint needs a greater unused
+  version; rollback may reuse an already registered matching pair.
 
 ## Product Rules
 
-- The player starts as a phàm nhân under Thanh Vân Sơn, finds the abandoned
-  cave, receives Thanh Mộc Quyết, 10 linh thạch, and 3 Tụ Khí Đan, then enters
-  Luyện Khí stage 1 after root inspection.
+- Under the default rules, the player starts under Thanh Vân Sơn, finds the
+  abandoned cave, receives one Thanh Mộc Quyết, 10 linh thạch and 3 Tụ Khí Đan,
+  then enters Luyện Khí stage 1 after root inspection. Configured starting
+  values replace those defaults only for a newly created save.
 - Idle systems must not run continuous timers. They calculate elapsed time from
   saved timestamps.
 - Randomness must go through a seedable random service.
 - Game engines must be testable without HTTP.
-- New Game grants three pills and one manual once, in the player creation
-  transaction. Migrating an existing save preserves its remaining pills and
-  manual; loading, restarting or repeating a migration grants nothing extra.
+- New Game grants the configured pills and manuals once, in the player creation
+  transaction. Migrating an existing save preserves its remaining inventory;
+  loading, restarting or repeating a migration grants nothing extra.
 - A breakthrough may use zero or one Tụ Khí Đan, for minor or major advancement.
-  The pill adds ten percentage points after the root modifier, capped at 95%,
-  without reducing an already higher unsupported chance.
+  Under default rules the pill adds ten percentage points after the root
+  modifier, capped at 95%, without reducing an already higher unsupported chance.
 - A committed supported success or failure consumes exactly one pill. Failure
   loses 10% of the required cultivation, capped by current cultivation, with
   no death, injury or debuff. Previewing, cancelling or rejection consumes none.
@@ -80,20 +87,21 @@ the world feel alive without click-heavy play.
   Browser pending data only preserves the retry payload, never game ownership.
 - Thanh Mộc Quyết is owned, non-consumable and grants no additional bonus in
   this slice. Only the starting pills are supplied; new sources await Phase 3.
-- Equipment in this slice grants only +5 sword, +3 robe or +2 amulet combat
-  power. Loot, random combat stats, durability, upgrades and detailed battle
-  attributes belong to Phase 3.
-- Exploration resolves immediately in this milestone. Thanh Vân Sơn has a 20%
-  empty encounter with no loot; victory awards 10 Linh Thạch and 1 Tụ Khí Đan;
-  defeat awards nothing but keeps the battle log. Seeded battle randomness is
-  replayable, and a request id replays the stored result without a second
-  battle or reward.
-- The living world advances in deterministic 10-minute ticks when read, without
-  a background worker. One return processes at most 144 ticks (24 hours) and
-  permanently skips older full ticks while preserving the remaining fraction.
+- Under default rules, equipment grants +5 sword, +3 robe or +2 amulet combat
+  power. Loot, random combat stats, durability and upgrades remain deferred.
+- Exploration resolves immediately. Under default rules Thanh Vân Sơn has a
+  20% empty encounter; victory awards 10 Linh Thạch and 1 Tụ Khí Đan. Seeded
+  randomness and request-id replay prevent a second battle or reward.
+- Under default rules, the living world advances in deterministic 10-minute
+  ticks and processes at most 24 hours per return without a background worker.
 - Phase 4 starts Tạ Vô Trần, Lạc Thanh Hàn and one unnamed wanderer exactly once
   per save. Their cultivation, expeditions, opportunities and injuries affect
   only NPC state and world news; they never grant player loot, buffs or debuffs.
+- Every probability, duration, cap, reward, starting quantity, stat modifier,
+  progression curve and seeded gameplay stat is configured through environment.
+  Configuration is typed and validated at startup; changes require restart and
+  a new rules version. Display copy, stable keys and asset paths are content,
+  not gameplay parameters.
 
 ## Access And Money
 

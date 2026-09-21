@@ -27,3 +27,18 @@ class RealmRepository:
         await self.session.flush()
         return root
 
+    async def sync_realm(self, definition: dict) -> Realm:
+        realm = await self.get_realm_by_key(definition["key"])
+        if realm is None:
+            return await self.add_realm(Realm(**definition))
+        for field in ("name", "rank_order", "max_stage", "base_required_exp", "growth_factor"):
+            setattr(realm, field, definition[field])
+        return realm
+
+    async def sync_root(self, definition: dict) -> SpiritualRoot:
+        root = await self.get_root_by_key(definition["key"])
+        if root is None:
+            return await self.add_root(SpiritualRoot(**definition))
+        for field in ("name", "elements", "quality", "cultivation_modifier", "breakthrough_modifier"):
+            setattr(root, field, definition[field])
+        return root

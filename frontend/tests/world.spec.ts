@@ -14,6 +14,7 @@ test("living world shows NPC profiles, news and persistent return report", async
   await page.goto("/#world");
   await expect(page.getByRole("heading", { name: "Thiên Hạ", exact: true })).toBeVisible();
   await expect(page.getByLabel("Trong lúc bạn vắng mặt")).toContainText("12 nhịp");
+  await expect(page.getByLabel("Trong lúc bạn vắng mặt")).toContainText(/Bộ luật v\d+ · [0-9a-f]{16}/);
   await expect(page.getByLabel("Trong lúc bạn vắng mặt")).toContainText(/cơ duyên|đột phá|bị thương|bình phục|linh triều|thương đội|khí tức yêu thú/);
   await expect(page.getByRole("button", { name: /Tạ Vô Trần/ })).toBeVisible();
   await page.getByRole("button", { name: /Tạ Vô Trần/ }).click();

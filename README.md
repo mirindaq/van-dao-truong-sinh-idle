@@ -186,6 +186,15 @@ initialize Tạ Vô Trần, Lạc Thanh Hàn and one wanderer on their first wor
 no events are backfilled from before initialization. A return processes at most
 24 hours, and world events do not change player resources.
 
+Gameplay balance is loaded once at backend startup from the `GAME_*` variables.
+For a local deployment, copy `backend/.env.example` to `backend/.env`, preserve
+the existing `DATABASE_URL` and `API_CORS_ORIGINS`, then edit the gameplay groups.
+Any balance change must also increment `GAME_RULES_VERSION`; restart the backend
+to apply it. `/health` exposes only the active version and fingerprint, and saved
+offline/world reports show the version that produced them. To roll back, restore
+the previous gameplay values and version together, then restart. Existing player
+state and committed receipts are never recalculated during either operation.
+
 ## Architecture
 
 Backend follows:

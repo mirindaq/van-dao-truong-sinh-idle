@@ -3,14 +3,18 @@ from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.game_rules import GameRules, game_rules
 from app.game.breakthrough import BreakthroughEngine
 from app.game.cultivation import CultivationEngine, CultivationInput
-from app.game.data.realms import REALM_DEFINITIONS, required_exp_for_stage
+from app.game.data.equipment import equipment_definitions
+from app.game.data.items import item_definitions
+from app.game.data.realms import realm_definitions, required_exp_for_stage
 from app.game.random_service import RandomService
-from app.game.data.items import PILL_KEY
+from app.game.data.items import MANUAL_KEY, PILL_KEY
 from app.repositories.inventory_repository import InventoryRepository
 from app.repositories.equipment_repository import EquipmentRepository
 from app.models.player import Player
+from app.models.item import Item
 from app.models.realm import Realm
 from app.models.spiritual_root import SpiritualRoot
 from app.repositories.game_log_repository import GameLogRepository
@@ -22,9 +26,9 @@ from app.schemas.game_state import (
     EquipRequest, EquippedRead,
 )
 
-INITIAL_ROOT = {
+INITIAL_ROOT_IDENTITY = {
     "key": "wood_common", "name": "Mộc Linh Căn", "elements": ["wood"],
-    "quality": "common", "cultivation_modifier": 1.08, "breakthrough_modifier": 1.02,
+    "quality": "common",
 }
 
 
@@ -35,15 +39,19 @@ class GameError(Exception):
 
 
 class GameStateService:
-    def __init__(self, session: AsyncSession, rng: RandomService | None = None) -> None:
+    def __init__(self, session: AsyncSession, rng: RandomService | None = None, rules: GameRules = game_rules) -> None:
         self.session = session
+        self.rules = rules
+        self.realm_definitions = realm_definitions(rules)
+        self.item_definitions = item_definitions(rules)
+        self.equipment_definitions = equipment_definitions(rules)
         self.players = PlayerRepository(session)
         self.realms = RealmRepository(session)
         self.logs = GameLogRepository(session)
         self.inventory = InventoryRepository(session)
         self.equipment = EquipmentRepository(session)
         self.cultivation_engine = CultivationEngine()
-        self.breakthrough_engine = BreakthroughEngine()
+        self.breakthrough_engine = BreakthroughEngine(rules)
         self.rng = rng or RandomService()
 
     async def _load(self) -> Player:
@@ -51,6 +59,7 @@ class GameStateService:
         player = await self.players.get_first()
         if player is None:
             raise GameError("no_save", 404)
+        await self._ensure_seed_data()
         return player
 
     async def get_state(self) -> GameStateRead:
@@ -65,19 +74,29 @@ class GameStateService:
         if await self.players.get_first() is not None:
             raise GameError("save_exists")
         await self._ensure_seed_data()
-        realm = await self.realms.get_realm_by_key("qi_refining")
-        root = await self.realms.get_root_by_key(INITIAL_ROOT["key"])
+        realm = await self.realms.get_realm_by_key(self.rules.starting_realm_key)
+        root = await self.realms.get_root_by_key(self.rules.starting_root_key)
         if realm is None or root is None:
             raise RuntimeError("Seed data missing")
         player = await self.players.add(Player(
-            name=name, realm=realm, spiritual_root=root, stage=1, cultivation_exp=0,
-            spirit_stones=10, combat_power=12,
+            name=name, realm=realm, spiritual_root=root, stage=self.rules.starting_stage, cultivation_exp=0,
+            spirit_stones=self.rules.starting_spirit_stones, combat_power=self.rules.starting_combat_power,
             manual_key="manual/qing_mu_jue", current_activity="cultivating",
             last_cultivation_at=datetime.now(timezone.utc),
         ))
-        await self.inventory.grant_initial(player.id)
+        await self.inventory.grant_initial(
+            player.id,
+            self.item_definitions,
+            self.rules.starting_pills,
+            self.rules.starting_manuals,
+        )
         await self.logs.create("player", "Bạn tìm thấy động phủ bỏ hoang dưới chân Thanh Vân Sơn.")
-        await self.logs.create("player", "Di vật còn lại gồm Thanh Mộc Quyết, 10 Linh Thạch và 3 Tụ Khí Đan.")
+        await self.logs.create(
+            "player",
+            f"Di vật còn lại gồm {self.rules.starting_manuals} Thanh Mộc Quyết, "
+            f"{self.rules.starting_spirit_stones} Linh Thạch và "
+            f"{self.rules.starting_pills} Tụ Khí Đan.",
+        )
         state = await self._state(player)
         await self.session.commit()
         return state
@@ -92,7 +111,11 @@ class GameStateService:
     async def claim_equipment_pack(self) -> GameStateRead:
         player = await self._load()
         if not player.equipment_pack_claimed:
-            await self.equipment.claim(player.id)
+            await self.equipment.claim(
+                player.id,
+                self.equipment_definitions,
+                self.rules.equipment_pack_quantity,
+            )
             player.equipment_pack_claimed = True
             await self.logs.create('equipment', 'Đã nhận gói trang bị: Thanh Trúc Kiếm, Vải Thô Đạo Bào và Thanh Mộc Ngọc Bội.')
         await self._apply_progress(player)
@@ -130,7 +153,11 @@ class GameStateService:
             fingerprint = receipt.log_metadata.get("request")
             if (fingerprint is not None and fingerprint != request.model_dump(mode="json")) or (fingerprint is None and request.quantity):
                 raise GameError("request_conflict")
-            result = BreakthroughResult.model_validate(receipt.log_metadata["result"])
+            result = BreakthroughResult.model_validate({
+                **receipt.log_metadata["result"],
+                "rules_version": receipt.log_metadata.get("rules_version", 1),
+                "rules_fingerprint": receipt.log_metadata.get("rules_fingerprint", "legacy"),
+            })
             await self.session.commit()
             return result
         stored_preview = await self.logs.preview_record(player.id, request.quantity)
@@ -164,7 +191,7 @@ class GameStateService:
             player.realm = target_realm
             player.stage = preview.target.stage
             player.cultivation_exp -= preview.required_exp
-            player.combat_power = round(player.combat_power * 1.15) + 2
+            player.combat_power = round(player.combat_power * self.rules.breakthrough_combat_multiplier) + self.rules.breakthrough_combat_flat
             message = f"Đột phá thành công: {target_realm.name} tầng {player.stage}."
         else:
             lost = min(player.cultivation_exp, odds.failure_loss)
@@ -174,6 +201,7 @@ class GameStateService:
             success=success, message=message, cultivation_lost=lost, realm=self._realm_read(player),
             item_key=request.item_key, items_consumed=request.quantity, final_chance=odds.total,
             created_at=datetime.now(timezone.utc),
+            rules_version=self.rules.rules_version, rules_fingerprint=self.rules.fingerprint,
         )
         player.last_cultivation_at = max(datetime.now(timezone.utc), player.last_cultivation_at + timedelta(microseconds=1))
         log = await self.logs.create("breakthrough", message)
@@ -181,6 +209,7 @@ class GameStateService:
             "player_id": player.id, "request_id": str(request.request_id),
             "source": source.model_dump(mode="json"), "target": preview.target.model_dump(mode="json"),
             "request": request.model_dump(mode="json"), "result": result.model_dump(mode="json"),
+            "rules_version": self.rules.rules_version, "rules_fingerprint": self.rules.fingerprint,
         }
         if request.quantity:
             log.message += " Đã dùng 1 Tụ Khí Đan."
@@ -197,7 +226,7 @@ class GameStateService:
         player.cultivation_exp = progress.cultivation_exp
         # Preserve fractional seconds and never move a future timestamp backwards.
         player.last_cultivation_at += timedelta(seconds=progress.elapsed_seconds)
-        if progress.elapsed_seconds >= 60 and progress.earned_exp > 0:
+        if progress.elapsed_seconds >= self.rules.offline_report_min_seconds and progress.earned_exp > 0:
             report = await self.logs.pending_offline()
             previous = report.log_metadata if report else {}
             if report is None:
@@ -206,6 +235,8 @@ class GameStateService:
                 "pending": True,
                 "elapsed_seconds": previous.get("elapsed_seconds", 0) + progress.elapsed_seconds,
                 "earned_exp": previous.get("earned_exp", 0) + progress.earned_exp,
+                "rules_version": self.rules.rules_version,
+                "rules_fingerprint": self.rules.fingerprint,
             }
             report.message = f"Bế quan kết thúc. Nhận {report.log_metadata['earned_exp']:.2f} tu vi."
 
@@ -223,7 +254,7 @@ class GameStateService:
         if player.stage < player.realm.max_stage:
             target = self._realm_read(player).model_copy(update={"stage": player.stage + 1})
         else:
-            definition = next((r for r in REALM_DEFINITIONS if r["rank_order"] == player.realm.rank_order + 1), None)
+            definition = next((r for r in self.realm_definitions if r["rank_order"] == player.realm.rank_order + 1), None)
             if definition:
                 realm = await self.realms.get_realm_by_key(definition["key"])
                 if realm:
@@ -264,6 +295,8 @@ class GameStateService:
         rate = base * player.spiritual_root.cultivation_modifier
         report = await self.logs.pending_offline()
         return GameStateRead(
+            rules_version=self.rules.rules_version,
+            rules_fingerprint=self.rules.fingerprint,
             player=PlayerRead(
                 id=player.id, name=player.name, spirit_stones=player.spirit_stones,
                 qi_gathering_pills=pills, combat_power=player.combat_power + equipment_bonus,
@@ -287,16 +320,23 @@ class GameStateService:
         )
 
     async def _ensure_seed_data(self) -> None:
-        for definition in REALM_DEFINITIONS:
-            if await self.realms.get_realm_by_key(definition["key"]) is None:
-                await self.realms.add_realm(Realm(**definition))
-        if await self.realms.get_root_by_key(INITIAL_ROOT["key"]) is None:
-            await self.realms.add_root(SpiritualRoot(**INITIAL_ROOT))
+        for definition in self.realm_definitions:
+            await self.realms.sync_realm(definition)
+        root_rule = self.rules.root_rules[self.rules.starting_root_key]
+        root_definition = {**INITIAL_ROOT_IDENTITY, "key": self.rules.starting_root_key, **root_rule.model_dump()}
+        await self.realms.sync_root(root_definition)
+        for definition in (*self.item_definitions, *self.equipment_definitions):
+            item = await self.session.get(Item, definition["key"])
+            if item is None:
+                self.session.add(Item(**definition))
+            else:
+                for field in ("name", "category", "description", "asset_key", "equipment_slot", "combat_bonus"):
+                    if field in definition:
+                        setattr(item, field, definition[field])
 
     @staticmethod
     def _realm_read(player: Player) -> RealmRead:
         return RealmRead(key=player.realm.key, name=player.realm.name, stage=player.stage, max_stage=player.realm.max_stage)
 
-    @staticmethod
-    def _base_rate_per_minute(player: Player) -> float:
-        return 1.2 * (1 + player.realm.rank_order * 0.15) * (1 + (player.stage - 1) * 0.04)
+    def _base_rate_per_minute(self, player: Player) -> float:
+        return self.rules.cultivation_base_rate * (1 + player.realm.rank_order * self.rules.cultivation_realm_bonus) * (1 + (player.stage - 1) * self.rules.cultivation_stage_bonus)

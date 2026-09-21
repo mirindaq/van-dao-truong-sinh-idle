@@ -3,6 +3,7 @@ from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint, 
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
+from app.core.game_rules import game_rules
 
 
 class ExplorationRun(Base):
@@ -19,4 +20,6 @@ class ExplorationRun(Base):
     reward_pills: Mapped[int] = mapped_column(Integer, default=0)
     battle_log: Mapped[list] = mapped_column(JSONB, default=list)
     combat_snapshot: Mapped[dict] = mapped_column(JSONB, default=dict)
+    rules_version: Mapped[int] = mapped_column(Integer, default=game_rules.rules_version)
+    rules_fingerprint: Mapped[str] = mapped_column(String(32), default=game_rules.fingerprint)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

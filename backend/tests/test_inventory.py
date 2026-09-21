@@ -161,6 +161,8 @@ async def test_legacy_receipt_remains_replayable(game):
     response = await client.post('/breakthrough/attempt', json={'request_id': request_id, 'revision': '2026-09-16T00:00:00Z'})
     assert response.status_code == 200
     assert response.json()['items_consumed'] == 0
+    assert response.json()['rules_version'] == 1
+    assert response.json()['rules_fingerprint'] == 'legacy'
     assert (await client.get('/game/state')).json()['player']['qi_gathering_pills'] == 3
 
 

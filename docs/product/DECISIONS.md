@@ -27,3 +27,19 @@ Recorded in: <file and section> | none — reply only
 
 Phase 3 entries are archived in decisions/phase-3-exploration-battle.md.
 Phase 4 entries are archived in decisions/phase-4-living-world.md.
+Phase 5 entries are archived in decisions/phase-5-game-configuration.md.
+
+## 2026-09-21 — phase-6-npc-relationships — roadmap — Mở quan hệ NPC
+Decision: Phase 6 đề xuất vòng gặp gỡ, lựa chọn hội thoại và thiện cảm lưu bền;
+mở rộng thám hiểm, linh thú và luyện đan lần lượt nằm ở Phase 7–9.
+Why: Quan hệ NPC dùng trực tiếp thế giới sống vừa hoàn tất mà chưa trộn thêm
+loot, sức mạnh hoặc kinh tế vào cùng một milestone.
+Recorded in: ROADMAP.md phase-6 đến phase-9;
+scopes/phase-6-npc-relationships.md.
+
+## 2026-09-21 — phase-6-npc-relationships — feature — Hội thoại ba lựa chọn
+Decision: Mỗi lượt gặp NPC là một tình huống ngắn với ba lựa chọn lời đáp;
+backend lưu lựa chọn, phản hồi và thay đổi thiện cảm trong cùng receipt.
+Why: Tạo quyết định đủ rõ để NPC có cá tính nhưng vẫn giữ vòng tương tác nhỏ.
+Recorded in: scopes/phase-6-npc-relationships.md Open decisions, The flow,
+Entities và Resilience.

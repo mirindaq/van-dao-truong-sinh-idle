@@ -20,6 +20,8 @@ class ExplorationRead(BaseModel):
     reward_pills: int
     battle_log: list[dict]
     combat_snapshot: dict
+    rules_version: int
+    rules_fingerprint: str
     created_at: datetime
 
 

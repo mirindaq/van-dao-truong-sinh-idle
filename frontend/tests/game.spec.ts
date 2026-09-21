@@ -42,6 +42,7 @@ for (const outcome of ["success", "failure"]) {
     await page.getByRole("button", { name: "ĐỘT PHÁ", exact: true }).click();
     await page.getByRole("button", { name: "BẮT ĐẦU ĐỘT PHÁ" }).click();
     await expect(page.getByRole("heading", { name: outcome === "success" ? "Đột phá thành công" : "Đột phá thất bại", exact: true })).toBeVisible();
+    await expect(page.getByRole("dialog")).toContainText(/Bộ luậtv\d+ · [0-9a-f]{16}/);
     if (outcome === "failure") await expect(page.getByRole("dialog")).toContainText("12");
     await page.getByRole("button", { name: "TIẾP TỤC TIÊN LỘ" }).click();
     await page.reload();
@@ -55,11 +56,20 @@ test("offline report survives reload and acknowledgement is persistent", async (
   await expect(page.getByRole("dialog")).toContainText("8 giờ");
   await page.reload();
   await expect(page.getByRole("dialog", { name: "Bế Quan Kết Thúc" })).toBeVisible();
+  await expect(page.getByRole("dialog")).toContainText(/Bộ luật v\d+ · [0-9a-f]{16}/);
   await page.getByRole("button", { name: "NHẬN TU VI" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.reload();
   await expect(page.getByRole("heading", { name: "Động Phủ", exact: true })).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("settings show only safe game-rules metadata", async ({ page, request }) => {
+  await request.post(`${backend}/_test/prepare/existing`);
+  await page.goto("/");
+  await page.getByRole("button", { name: "Cài đặt" }).click();
+  await expect(page.getByRole("dialog", { name: "Cài đặt" })).toContainText(/Bộ luậtv\d+ · [0-9a-f]{16}/);
+  await expect(page.getByRole("dialog")).not.toContainText("DATABASE_URL");
 });
 
 test("mobile navigation, locked content, assets and no horizontal overflow", async ({ page, request }) => {

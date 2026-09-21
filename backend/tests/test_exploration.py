@@ -12,6 +12,7 @@ from app.game.data.items import PILL_KEY
 from app.repositories.player_repository import PlayerRepository
 from app.services.exploration_service import ExplorationService
 from app.schemas.exploration import ExplorationRequest
+from app.core.game_rules import game_rules
 
 
 async def new_game(client):
@@ -81,3 +82,24 @@ async def test_invalid_location_and_missing_run(game):
     await new_game(client)
     assert (await client.post('/exploration/run', json={'request_id': str(uuid4()), 'location_key': 'unknown'})).json()['detail'] == 'location_unavailable'
     assert (await client.get(f'/exploration/run/{uuid4()}')).status_code == 404
+
+
+async def test_exploration_override_is_saved_and_replayed_after_rules_change(game):
+    client, sessions = game
+    await new_game(client)
+    request_id = uuid4()
+    rules = game_rules.model_copy(update={
+        "rules_version": game_rules.rules_version + 1,
+        "exploration_empty_chance": 0,
+        "exploration_reward_stones": 37,
+        "exploration_reward_pills": 2,
+    })
+    async with sessions() as session:
+        rng = Mock(); rng.roll = Mock(return_value=.9); rng.randint = Mock(return_value=0)
+        receipt = await ExplorationService(session, rng, rules).run(ExplorationRequest(request_id=request_id))
+    assert receipt.exploration.reward_stones == 37
+    assert receipt.exploration.reward_pills == 2
+    assert receipt.exploration.rules_version == rules.rules_version
+    replay = (await client.get(f"/exploration/run/{request_id}")).json()["exploration"]
+    assert replay["reward_stones"] == 37
+    assert replay["rules_fingerprint"] == rules.fingerprint

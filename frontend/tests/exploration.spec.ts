@@ -14,6 +14,7 @@ test("exploration resolves, shows battle log and persists after reload", async (
   await expect(page.getByRole("heading", { name: "Thám Hiểm" })).toBeVisible();
   await page.getByRole("button", { name: "BẮT ĐẦU THÁM HIỂM" }).click();
   await expect(page.getByText("KẾT QUẢ ĐÃ LƯU")).toBeVisible();
+  await expect(page.getByText(/Bộ luật v\d+ · [0-9a-f]{16}/)).toBeVisible();
   await expect(page.getByText(/Linh Thạch/)).toBeVisible();
   await page.reload();
   await expect(page.getByText("KẾT QUẢ ĐÃ LƯU")).toBeVisible();

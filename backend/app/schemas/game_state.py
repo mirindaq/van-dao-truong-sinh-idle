@@ -35,6 +35,8 @@ class OfflineRead(BaseModel):
     id: int
     elapsed_seconds: int
     earned_exp: float
+    rules_version: int = 1
+    rules_fingerprint: str = "legacy"
 
 
 class BreakthroughRead(BaseModel):
@@ -82,6 +84,8 @@ class BreakthroughResult(BaseModel):
     items_consumed: int = 0
     final_chance: float | None = None
     created_at: datetime | None = None
+    rules_version: int = 1
+    rules_fingerprint: str = "legacy"
 
 
 class PlayerRead(BaseModel):
@@ -128,6 +132,8 @@ class EquippedRead(BaseModel):
 
 
 class GameStateRead(BaseModel):
+    rules_version: int
+    rules_fingerprint: str
     player: PlayerRead
     realm: RealmRead
     spiritual_root: SpiritualRootRead

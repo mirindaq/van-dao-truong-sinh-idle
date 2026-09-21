@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.game_rules import GameRules, game_rules
 from app.game.world import NpcSnapshot, WorldEngine
 from app.models.world import WorldEvent, WorldNpc, WorldReport, WorldState
 from app.schemas.world import WorldEventFilter, WorldEventPage, WorldEventRead, WorldNpcRead, WorldRead, WorldReportRead
@@ -14,20 +15,26 @@ from app.services.game_state_service import GameStateService
 
 NPC_DEFINITIONS = (
     dict(key="xie_wuchen", name="Tạ Vô Trần", description="Kiếm tu trầm mặc, một lòng tìm kiếm đại đạo.",
-         spiritual_root="Kim Linh Căn", stage=3, cultivation_exp=40, cultivation_rate=10, portrait_key="npc/xie_wuchen"),
+         spiritual_root="Kim Linh Căn", portrait_key="npc/xie_wuchen"),
     dict(key="luo_qinghan", name="Lạc Thanh Hàn", description="Nữ tu hành tung khó đoán, thường lui tới Hàn Nguyệt Cốc.",
-         spiritual_root="Băng Linh Căn", stage=2, cultivation_exp=25, cultivation_rate=9, portrait_key="npc/luo_qinghan"),
+         spiritual_root="Băng Linh Căn", portrait_key="npc/luo_qinghan"),
     dict(key="wandering_cultivator", name="Tán Tu Vô Danh", description="Một tán tu bình thường đang tìm chỗ đứng dưới chân núi.",
-         spiritual_root="Thổ Linh Căn", stage=1, cultivation_exp=10, cultivation_rate=6, portrait_key=None),
+         spiritual_root="Thổ Linh Căn", portrait_key=None),
 )
 
 
 class WorldService:
-    def __init__(self, session: AsyncSession, now: datetime | None = None):
+    def __init__(
+        self,
+        session: AsyncSession,
+        now: datetime | None = None,
+        rules: GameRules = game_rules,
+    ):
         self.session = session
         self.now = now
-        self.game = GameStateService(session)
-        self.engine = WorldEngine()
+        self.rules = rules
+        self.game = GameStateService(session, rules=rules)
+        self.engine = WorldEngine(rules)
 
     async def get_state(self, event_filter: WorldEventFilter = "all") -> WorldRead:
         player = await self.game._load()
@@ -60,16 +67,28 @@ class WorldService:
         world = await self.session.scalar(select(WorldState).where(WorldState.player_id == player_id))
         if world is not None:
             return world
-        world = WorldState(player_id=player_id, seed=1407 + player_id, rules_version=1,
+        world = WorldState(player_id=player_id, seed=self.rules.world_seed_base + player_id,
+                           rules_version=self.rules.rules_version, rules_fingerprint=self.rules.fingerprint,
                            total_ticks=0, started_at=now, last_simulated_at=now)
         self.session.add(world)
         await self.session.flush()
         for definition in NPC_DEFINITIONS:
-            self.session.add(WorldNpc(world_id=world.id, activity="cultivating", location="Thanh Vân Sơn", **definition))
+            npc_rules = self.rules.npc_rules[definition["key"]]
+            self.session.add(WorldNpc(
+                world_id=world.id,
+                activity="cultivating",
+                location="Thanh Vân Sơn",
+                stage=npc_rules.stage,
+                cultivation_exp=npc_rules.cultivation_exp,
+                cultivation_rate=npc_rules.cultivation_rate,
+                **definition,
+            ))
         await self.session.flush()
         return world
 
     async def _simulate(self, world: WorldState, now: datetime) -> None:
+        world.rules_version = self.rules.rules_version
+        world.rules_fingerprint = self.rules.fingerprint
         elapsed = max(0, int((now - world.last_simulated_at).total_seconds()))
         full_ticks = elapsed // (self.engine.tick_minutes * 60)
         if full_ticks == 0:
@@ -104,10 +123,16 @@ class WorldService:
         world.last_simulated_at += timedelta(minutes=self.engine.tick_minutes * full_ticks)
         if changed or created or skipped_seconds:
             report = await self.session.scalar(select(WorldReport).where(
-                WorldReport.world_id == world.id, WorldReport.pending.is_(True)).order_by(desc(WorldReport.id)).limit(1))
+                WorldReport.world_id == world.id,
+                WorldReport.pending.is_(True),
+                WorldReport.rules_version == self.rules.rules_version,
+                WorldReport.rules_fingerprint == self.rules.fingerprint,
+            ).order_by(desc(WorldReport.id)).limit(1))
             if report is None:
                 report = WorldReport(world_id=world.id, started_at=previous_time, ended_at=world.last_simulated_at,
                                      processed_ticks=0, skipped_seconds=0, event_count=0, npc_updates=0,
+                                     rules_version=self.rules.rules_version,
+                                     rules_fingerprint=self.rules.fingerprint,
                                      npc_keys=[], summary={}, pending=True)
                 self.session.add(report)
             old_summary = Counter(report.summary or {})
@@ -140,7 +165,9 @@ class WorldService:
         report = await self.session.scalar(select(WorldReport).where(
             WorldReport.world_id == world.id, WorldReport.pending.is_(True)).order_by(desc(WorldReport.id)).limit(1))
         return WorldRead(
-            updated_at=world.last_simulated_at, tick_minutes=self.engine.tick_minutes, max_offline_hours=24,
+            updated_at=world.last_simulated_at, tick_minutes=self.engine.tick_minutes,
+            max_offline_hours=self.rules.world_max_offline_hours,
+            rules_version=world.rules_version, rules_fingerprint=world.rules_fingerprint,
             npcs=[WorldNpcRead(
                 key=n.key, name=n.name, description=n.description, spiritual_root=n.spiritual_root,
                 realm_key=n.realm_key, realm_name=self.engine.realm_name(n.realm_key), stage=n.stage,

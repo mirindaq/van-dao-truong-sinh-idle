@@ -1,93 +1,27 @@
-REALM_DEFINITIONS = [
-    {
-        "key": "mortal",
-        "name": "Phàm Nhân",
-        "rank_order": 0,
-        "max_stage": 1,
-        "base_required_exp": 100,
-        "growth_factor": 1.0,
-    },
-    {
-        "key": "qi_refining",
-        "name": "Luyện Khí",
-        "rank_order": 1,
-        "max_stage": 9,
-        "base_required_exp": 120,
-        "growth_factor": 1.45,
-    },
-    {
-        "key": "foundation_establishment",
-        "name": "Trúc Cơ",
-        "rank_order": 2,
-        "max_stage": 9,
-        "base_required_exp": 800,
-        "growth_factor": 1.55,
-    },
-    {
-        "key": "golden_core",
-        "name": "Kim Đan",
-        "rank_order": 3,
-        "max_stage": 9,
-        "base_required_exp": 4500,
-        "growth_factor": 1.65,
-    },
-    {
-        "key": "nascent_soul",
-        "name": "Nguyên Anh",
-        "rank_order": 4,
-        "max_stage": 9,
-        "base_required_exp": 22000,
-        "growth_factor": 1.75,
-    },
-    {
-        "key": "soul_formation",
-        "name": "Hóa Thần",
-        "rank_order": 5,
-        "max_stage": 9,
-        "base_required_exp": 110000,
-        "growth_factor": 1.85,
-    },
-    {
-        "key": "void_refinement",
-        "name": "Luyện Hư",
-        "rank_order": 6,
-        "max_stage": 9,
-        "base_required_exp": 520000,
-        "growth_factor": 1.95,
-    },
-    {
-        "key": "body_integration",
-        "name": "Hợp Thể",
-        "rank_order": 7,
-        "max_stage": 9,
-        "base_required_exp": 2_400_000,
-        "growth_factor": 2.05,
-    },
-    {
-        "key": "mahayana",
-        "name": "Đại Thừa",
-        "rank_order": 8,
-        "max_stage": 9,
-        "base_required_exp": 11_000_000,
-        "growth_factor": 2.15,
-    },
-    {
-        "key": "tribulation",
-        "name": "Độ Kiếp",
-        "rank_order": 9,
-        "max_stage": 9,
-        "base_required_exp": 50_000_000,
-        "growth_factor": 2.25,
-    },
-    {
-        "key": "human_immortal",
-        "name": "Nhân Tiên",
-        "rank_order": 10,
-        "max_stage": 9,
-        "base_required_exp": 230_000_000,
-        "growth_factor": 2.35,
-    },
-]
+from app.core.game_rules import GameRules, game_rules
+
+
+REALM_IDENTITIES = (
+    ("mortal", "Phàm Nhân", 0),
+    ("qi_refining", "Luyện Khí", 1),
+    ("foundation_establishment", "Trúc Cơ", 2),
+    ("golden_core", "Kim Đan", 3),
+    ("nascent_soul", "Nguyên Anh", 4),
+    ("soul_formation", "Hóa Thần", 5),
+    ("void_refinement", "Luyện Hư", 6),
+    ("body_integration", "Hợp Thể", 7),
+    ("mahayana", "Đại Thừa", 8),
+    ("tribulation", "Độ Kiếp", 9),
+    ("human_immortal", "Nhân Tiên", 10),
+)
+
+
+def realm_definitions(rules: GameRules = game_rules) -> list[dict]:
+    return [{"key": key, "name": name, "rank_order": rank, **rules.realm_rules[key].model_dump()}
+            for key, name, rank in REALM_IDENTITIES]
+
+
+REALM_DEFINITIONS = realm_definitions()
 
 
 def required_exp_for_stage(base_required_exp: int, growth_factor: float, stage: int) -> int:

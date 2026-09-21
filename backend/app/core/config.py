@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://postgres:123456@localhost:5432/mydb"
     api_cors_origins: str = Field(default="http://localhost:3000")
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     @field_validator("database_url")
     @classmethod

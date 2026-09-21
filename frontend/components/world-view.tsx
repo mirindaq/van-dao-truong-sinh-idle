@@ -34,5 +34,5 @@ const summaryLabels: Record<string, string> = { breakthrough: "đột phá", bre
 
 export function WorldReportDetails({ report }: { report: WorldReport }) {
   const details = Object.entries(report.summary).filter(([, count]) => count > 0).map(([kind, count]) => `${count} ${summaryLabels[kind] ?? kind}`);
-  return <><p>{report.processed_ticks} nhịp · {report.npc_updates} NPC tiến triển · {report.event_count} tin đáng chú ý</p>{details.length > 0 && <small>{details.join(" · ")}</small>}{report.skipped_seconds > 0 && <small>{number(report.skipped_seconds / 3600, 1)} giờ vượt giới hạn không được mô phỏng.</small>}</>;
+  return <><p>{report.processed_ticks} nhịp · {report.npc_updates} NPC tiến triển · {report.event_count} tin đáng chú ý</p>{details.length > 0 && <small>{details.join(" · ")}</small>}{report.skipped_seconds > 0 && <small>{number(report.skipped_seconds / 3600, 1)} giờ vượt giới hạn không được mô phỏng.</small>}<small>Bộ luật v{report.rules_version} · {report.rules_fingerprint}</small></>;
 }

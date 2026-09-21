@@ -1,10 +1,7 @@
 from dataclasses import dataclass
 
+from app.core.game_rules import GameRules, game_rules
 from app.game.random_service import RandomService
-
-MINOR_CHANCE = 0.85
-MAJOR_CHANCE = 0.45
-FAILURE_LOSS_FRACTION = 0.10
 
 
 @dataclass(frozen=True)
@@ -17,11 +14,14 @@ class BreakthroughOdds:
 
 
 class BreakthroughEngine:
+    def __init__(self, rules: GameRules = game_rules):
+        self.rules = rules
+
     def preview(self, *, major: bool, root_modifier: float, required_exp: int, use_pill: bool = False) -> BreakthroughOdds:
-        base = MAJOR_CHANCE if major else MINOR_CHANCE
+        base = self.rules.breakthrough_major_chance if major else self.rules.breakthrough_minor_chance
         total = min(1.0, max(0.0, base * root_modifier))
-        supported = max(total, min(0.95, total + 0.10)) if use_pill else total
-        return BreakthroughOdds(base, total - base, supported, required_exp * FAILURE_LOSS_FRACTION, supported - total)
+        supported = max(total, min(self.rules.breakthrough_supported_cap, total + self.rules.breakthrough_pill_bonus)) if use_pill else total
+        return BreakthroughOdds(base, total - base, supported, required_exp * self.rules.breakthrough_failure_loss, supported - total)
 
     def attempt(self, odds: BreakthroughOdds, rng: RandomService) -> bool:
         return rng.roll() < odds.total

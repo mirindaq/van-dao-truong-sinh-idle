@@ -33,22 +33,23 @@ async def test_legacy_save_migration_and_redeploy(quantity):
             await conn.run_sync(upgrade, '20260916_0003')
             if quantity is not None:
                 await conn.execute(text("""INSERT INTO realms
-                    (id,key,name,rank_order,max_stage,base_required_exp,growth_factor)
-                    VALUES (1,'qi_refining','Luyện Khí',1,9,120,1.45)"""))
+                    (key,name,rank_order,max_stage,base_required_exp,growth_factor)
+                    VALUES ('qi_refining','Luyện Khí',1,9,120,1.45)"""))
                 await conn.execute(text("""INSERT INTO spiritual_roots
-                    (id,key,name,elements,quality,cultivation_modifier,breakthrough_modifier)
-                    VALUES (1,'wood_common','Mộc Linh Căn',ARRAY['wood'],'common',1.08,1.02)"""))
+                    (key,name,elements,quality,cultivation_modifier,breakthrough_modifier)
+                    VALUES ('wood_common','Mộc Linh Căn',ARRAY['wood'],'common',1.08,1.02)"""))
                 await conn.execute(text("""INSERT INTO players
                     (name,realm_id,spiritual_root_id,stage,cultivation_exp,spirit_stones,
                     qi_gathering_pills,combat_power,manual_key,current_activity,last_cultivation_at)
-                    VALUES ('Thanh Vân',1,1,2,45,17,:quantity,12,
+                    VALUES ('Thanh Vân',(SELECT id FROM realms WHERE key='qi_refining'),
+                    (SELECT id FROM spiritual_roots WHERE key='wood_common'),2,45,17,:quantity,12,
                     'manual/qing_mu_jue','cultivating',now() + interval '1 hour')"""), {'quantity': quantity})
             await conn.run_sync(upgrade, 'head')
         await engine.dispose()
         engine = create_async_engine(settings.database_url, connect_args=options)
         async with engine.begin() as conn:
             await conn.run_sync(upgrade, 'head')
-            assert (await conn.execute(text('SELECT version_num FROM alembic_version'))).scalar() == '20260918_0007'
+            assert (await conn.execute(text('SELECT version_num FROM alembic_version'))).scalar() == '20260921_0008'
             assert (await conn.execute(text('SELECT count(*) FROM players'))).scalar() == (0 if quantity is None else 1)
             if quantity is None:
                 assert (await conn.execute(text('SELECT count(*) FROM owned_items'))).scalar() == 0
