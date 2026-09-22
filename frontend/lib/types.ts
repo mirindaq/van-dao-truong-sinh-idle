@@ -83,6 +83,27 @@ export type WorldState = {
 };
 export type WorldEventPage = { events: WorldEvent[]; next_cursor: number | null };
 
+export type InteractionChoice = { key: string; text: string };
+export type InteractionPrompt = {
+  key: string; version: number; text: string; choices: InteractionChoice[]; created_at: string;
+};
+export type InteractionReceipt = {
+  request_id: string; npc_key: string; prompt_key: string; prompt_version: number;
+  prompt_text: string; choice_key: string; choice_text: string; response_text: string;
+  affinity_delta: number; resulting_affinity: number; created_at: string;
+};
+export type RelationshipProfile = {
+  npc_key: string; npc_name: string; affinity: number; address: string;
+  last_interaction_at: string | null; next_available_at: string | null;
+  can_interact: boolean; prompt: InteractionPrompt | null; history: InteractionReceipt[];
+};
+export type InteractionRequest = {
+  request_id: string; prompt_key: string; prompt_version: number; choice_key: string;
+};
+export type InteractionResponse = {
+  profile: RelationshipProfile; interaction: InteractionReceipt;
+};
+
 export type InventoryItem = {
   key: string; name: string; category: string; description: string; asset_key: string; quantity: number;
   equipment_slot: EquipmentSlot | null; combat_bonus: number;

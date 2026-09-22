@@ -43,3 +43,11 @@ backend lưu lựa chọn, phản hồi và thay đổi thiện cảm trong cùn
 Why: Tạo quyết định đủ rõ để NPC có cá tính nhưng vẫn giữ vòng tương tác nhỏ.
 Recorded in: scopes/phase-6-npc-relationships.md Open decisions, The flow,
 Entities và Resilience.
+
+## 2026-09-21 — phase-6-npc-relationships — contract — Thiện cảm chỉ đổi nội dung
+Decision: Thiện cảm chỉ thay đổi hội thoại, cách xưng hô và tin NPC; không cấp
+vật phẩm, sức mạnh, buff, quest hoặc mở quan hệ thưởng trong Phase 6.
+Why: Giữ vòng gặp gỡ tập trung vào nhân vật và chứng minh persistence trước khi
+gắn thêm hệ thống phần thưởng.
+Recorded in: PRODUCT.md Source Of Truth và Product Rules;
+scopes/phase-6-npc-relationships.md Open decisions, Deferred và Evidence.

@@ -10,8 +10,8 @@ trở về sau đó vẫn thấy quan hệ cùng lịch sử hội thoại đã 
 - **Settled 2026-09-21 (walk) — nhịp gặp gỡ:** mỗi NPC có tối đa một lượt trò
   chuyện mới theo cooldown environment, mặc định 12 giờ UTC server; lượt chưa
   dùng không cộng dồn.
-- **Owner — tác động:** thiện cảm chỉ đổi hội thoại, cách xưng hô và tin NPC;
-  chưa cấp quà, buff, quest hoặc mở đạo lữ (default: chỉ nội dung).
+- **Settled 2026-09-21 (walk) — tác động:** thiện cảm chỉ đổi hội thoại, cách
+  xưng hô và tin NPC; chưa cấp quà, buff, quest hoặc mở đạo lữ.
 
 ## The flow
 1. Người chơi mở **Thiên Hạ**, chọn NPC và thấy thiện cảm, lần trò chuyện gần
@@ -98,5 +98,7 @@ Manual, at close:
   resilience và evidence hiện tại đã phản ánh lựa chọn này, không phát sinh điểm mới.
 - 2026-09-21: Owner đổi nhịp mặc định thành 12 giờ và yêu cầu cấu hình qua
   environment; relationship chuyển sang Phase 6 sau nền cấu hình Phase 5.
+- 2026-09-21: Owner chốt thiện cảm chỉ tác động nội dung; flow, resilience,
+  deferred và evidence giữ nguyên, không phát sinh điểm mở mới.
 
 ## Closed

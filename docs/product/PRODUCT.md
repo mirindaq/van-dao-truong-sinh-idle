@@ -34,7 +34,8 @@ the world feel alive without click-heavy play.
 - World state: one per save, with a deterministic seed, rules version and the
   last processed 10-minute tick. World events and unread return reports derive
   from its committed ticks.
-- Pet, alchemy and relationship objects remain planned.
+- Pet and alchemy objects remain planned. NPC relationships, pending
+  prompts and interaction receipts are saved per save.
 
 ## Source Of Truth
 
@@ -62,6 +63,9 @@ the world feel alive without click-heavy play.
 - PostgreSQL registers each rules version with exactly one fingerprint before
   the backend accepts requests. A changed fingerprint needs a greater unused
   version; rollback may reuse an already registered matching pair.
+- PostgreSQL decides each NPC relationship, pending conversation and immutable
+  interaction receipt. Browser storage only preserves a request payload for
+  retry; browser time never opens a conversation turn.
 
 ## Product Rules
 
@@ -102,6 +106,9 @@ the world feel alive without click-heavy play.
   Configuration is typed and validated at startup; changes require restart and
   a new rules version. Display copy, stable keys and asset paths are content,
   not gameplay parameters.
+- NPC affinity changes dialogue, forms of address and NPC news only. It never
+  grants player resources, power, buffs, quests or relationship rewards in the
+  current milestone.
 
 ## Access And Money
 

@@ -7,6 +7,7 @@ from app.api.routes.breakthrough import router as breakthrough_router
 from app.api.routes.equipment import router as equipment_router
 from app.api.routes.exploration import router as exploration_router
 from app.api.routes.world import router as world_router
+from app.api.routes.relationships import router as relationships_router
 from app.core.game_rules import game_rules
 from app.core.game_rule_registry import register_game_rules
 from app.services.game_state_service import GameError
@@ -45,6 +46,7 @@ def create_app() -> FastAPI:
     app.include_router(equipment_router, prefix="/equipment", tags=["equipment"])
     app.include_router(exploration_router, prefix="/exploration", tags=["exploration"])
     app.include_router(world_router, prefix="/world", tags=["world"])
+    app.include_router(relationships_router, prefix="/relationships", tags=["relationships"])
 
     @app.exception_handler(GameError)
     async def game_error_handler(request, exc: GameError):

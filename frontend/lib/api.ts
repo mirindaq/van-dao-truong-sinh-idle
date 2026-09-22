@@ -1,4 +1,4 @@
-import type { BreakthroughPreview, BreakthroughRequest, BreakthroughResult, GameState, EquipmentSlot, ExplorationResponse, WorldEventPage, WorldState } from "@/lib/types";
+import type { BreakthroughPreview, BreakthroughRequest, BreakthroughResult, GameState, EquipmentSlot, ExplorationResponse, InteractionRequest, InteractionResponse, RelationshipProfile, WorldEventPage, WorldState } from "@/lib/types";
 
 const messages: Record<string, string> = {
   no_save: "Tiên lộ của bạn chưa bắt đầu.",
@@ -12,6 +12,13 @@ const messages: Record<string, string> = {
   item_not_owned: "Bạn chưa sở hữu trang bị này. Hãy đồng bộ lại túi đồ.",
   invalid_equipment: "Vật phẩm không phù hợp với ô trang bị này.",
   request_conflict: "Lần đột phá này đã được gửi với lựa chọn khác. Hãy đồng bộ lại hành trình.",
+  npc_not_found: "Không tìm thấy vị tu sĩ này trong thiên hạ.",
+  interaction_cooldown: "Cơ duyên trò chuyện chưa tới. Hãy trở lại sau.",
+  interaction_unavailable: "Lượt trò chuyện này không còn khả dụng.",
+  interaction_not_found: "Chưa tìm thấy kết quả trò chuyện này.",
+  interaction_request_conflict: "Lượt trò chuyện này đã được gửi với lời đáp khác.",
+  prompt_conflict: "Tình huống đã thay đổi. Hãy mở lại cuộc trò chuyện.",
+  invalid_choice: "Lời đáp này không còn khả dụng.",
 };
 
 export class GameApiError extends Error {
@@ -48,6 +55,10 @@ export const gameApi = {
   world: () => request<WorldState>("/world/state"),
   worldEvents: (beforeId: number) => request<WorldEventPage>(`/world/events?before_id=${beforeId}`),
   acknowledgeWorldReport: (id: number) => request<void>(`/world/report/${id}/ack`, {}),
+  relationship: (npcKey: string) => request<RelationshipProfile>(`/relationships/npcs/${npcKey}`),
+  openInteraction: (npcKey: string) => request<RelationshipProfile>(`/relationships/npcs/${npcKey}/prompt`, {}),
+  interact: (npcKey: string, payload: InteractionRequest) => request<InteractionResponse>(`/relationships/npcs/${npcKey}/interactions`, payload),
+  getInteraction: (requestId: string) => request<InteractionResponse>(`/relationships/interactions/${requestId}`),
   state: () => request<GameState>("/game/state"),
   newGame: (name: string) => request<GameState>("/game/new", { name }),
   acknowledgeOffline: (id: number) => request<void>(`/game/offline/${id}/ack`, {}),

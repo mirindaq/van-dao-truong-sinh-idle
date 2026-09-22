@@ -50,6 +50,69 @@ test("world remains usable with keyboard and at mobile widths", async ({ page })
   expect(await page.locator(".npc-card img").evaluateAll(images => images.every(image => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0))).toBe(true);
 });
 
+test("NPC conversation persists affinity, cooldown and history", async ({ page }) => {
+  await page.goto("/#world");
+  await page.getByRole("button", { name: /Tạ Vô Trần/ }).click();
+  const relationship = page.getByLabel("Quan hệ với Tạ Vô Trần");
+  await expect(relationship).toContainText("0 / 100");
+  await relationship.getByRole("button", { name: "TRÒ CHUYỆN" }).click();
+  await expect(relationship.locator(".interaction-choices button")).toHaveCount(3);
+  await relationship.getByRole("button", { name: "Một lòng không đổi." }).click();
+  await expect(relationship).toContainText("8 / 100");
+  await expect(relationship).toContainText("Lịch sử trò chuyện");
+  await expect(relationship).toContainText("Có thể trò chuyện lại lúc");
+  await page.reload();
+  await page.getByRole("button", { name: /Tạ Vô Trần/ }).click();
+  await expect(page.getByLabel("Quan hệ với Tạ Vô Trần")).toContainText("8 / 100");
+  await page.setViewportSize({ width: 320, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test("lost interaction reply recovers the committed receipt once", async ({ page }) => {
+  await page.goto("/#world");
+  await page.getByRole("button", { name: /Lạc Thanh Hàn/ }).click();
+  const relationship = page.getByLabel("Quan hệ với Lạc Thanh Hàn");
+  await relationship.getByRole("button", { name: "TRÒ CHUYỆN" }).click();
+  await page.route("**/api/relationships/npcs/luo_qinghan/interactions", async route => {
+    const url = new URL(route.request().url());
+    await route.fetch({ url: backend + url.pathname.replace(/^\/api/, ""), method: "POST" });
+    await route.abort();
+  });
+  await relationship.getByRole("button", { name: "Cùng người tìm đường." }).click();
+  await expect(relationship.getByRole("alert")).toBeVisible();
+  await page.unroute("**/api/relationships/npcs/luo_qinghan/interactions");
+  await page.reload();
+  await page.getByRole("button", { name: /Lạc Thanh Hàn/ }).click();
+  const recovered = page.getByLabel("Quan hệ với Lạc Thanh Hàn");
+  await expect(recovered).toContainText("8 / 100");
+  await expect(recovered).toContainText("Vậy thì con đường ấy bớt lạnh rồi.");
+  await expect(recovered.locator(".interaction-history li")).toHaveCount(1);
+});
+
+test("the losing tab reads the winning interaction instead of retrying forever", async ({ page, request }) => {
+  await page.goto("/#world");
+  await page.getByRole("button", { name: /Tán Tu Vô Danh/ }).click();
+  const relationship = page.getByLabel("Quan hệ với Tán Tu Vô Danh");
+  await relationship.getByRole("button", { name: "TRÒ CHUYỆN" }).click();
+  const profile = await (await request.get(`${backend}/relationships/npcs/wandering_cultivator`)).json();
+  const winner = profile.prompt.choices[0];
+  const committed = await request.post(`${backend}/relationships/npcs/wandering_cultivator/interactions`, { data: {
+    request_id: crypto.randomUUID(), prompt_key: profile.prompt.key,
+    prompt_version: profile.prompt.version, choice_key: winner.key,
+  } });
+  expect(committed.ok()).toBe(true);
+  const winnerProfile = await (await request.get(`${backend}/relationships/npcs/wandering_cultivator`)).json();
+  expect(winnerProfile.affinity).toBe(8);
+  expect(winnerProfile.history).toHaveLength(1);
+  await relationship.getByRole("button", { name: "Chỉ có cơ duyên quyết định." }).click();
+  await expect(relationship).toContainText("8 / 100");
+  await expect(relationship).toContainText(winner.text);
+  await expect(relationship.locator(".interaction-history li")).toHaveCount(1);
+  await page.reload();
+  await page.getByRole("button", { name: /Tán Tu Vô Danh/ }).click();
+  await expect(page.getByLabel("Quan hệ với Tán Tu Vô Danh").locator(".interaction-history li")).toHaveCount(1);
+});
+
 test("world keeps the last snapshot when refresh loses connection", async ({ page }) => {
   await page.goto("/#world");
   await expect(page.getByRole("button", { name: /Lạc Thanh Hàn/ })).toBeVisible();
