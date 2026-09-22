@@ -49,7 +49,7 @@ async def test_legacy_save_migration_and_redeploy(quantity):
         engine = create_async_engine(settings.database_url, connect_args=options)
         async with engine.begin() as conn:
             await conn.run_sync(upgrade, 'head')
-            assert (await conn.execute(text('SELECT version_num FROM alembic_version'))).scalar() == '20260921_0009'
+            assert (await conn.execute(text('SELECT version_num FROM alembic_version'))).scalar() == '20260922_0010'
             assert (await conn.execute(text('SELECT count(*) FROM players'))).scalar() == (0 if quantity is None else 1)
             if quantity is None:
                 assert (await conn.execute(text('SELECT count(*) FROM owned_items'))).scalar() == 0

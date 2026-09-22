@@ -18,6 +18,9 @@ class ExplorationRead(BaseModel):
     victory: bool | None
     reward_stones: int
     reward_pills: int
+    reward_item_key: str | None = None
+    reward_item_quantity: int = 0
+    available_at: datetime | None = None
     battle_log: list[dict]
     combat_snapshot: dict
     rules_version: int

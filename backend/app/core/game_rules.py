@@ -83,6 +83,11 @@ class GameRules(BaseSettings):
     relationship_affinity_max: int
     relationship_affinity_initial: int
 
+    journey_hau_son_minutes: int = Field(gt=0)
+    journey_ngoai_vi_minutes: int = Field(gt=0)
+    journey_linh_mach_minutes: int = Field(gt=0)
+    journey_material_quantity: int = Field(gt=0)
+
     realm_rules: dict[str, RealmRule]
     root_rules: dict[str, RootRule]
     equipment_bonuses: dict[str, int]
@@ -133,9 +138,12 @@ class GameRules(BaseSettings):
             "items/bamboo_sword",
             "items/cloth_robe",
             "items/wood_amulet",
+            "items/spirit_vein_sword",
         }
         if set(self.equipment_bonuses) != required_equipment:
             raise ValueError("GAME_EQUIPMENT_BONUSES must define every equipment item")
+        if self.equipment_bonuses["items/spirit_vein_sword"] <= self.equipment_bonuses["items/bamboo_sword"]:
+            raise ValueError("GAME_EQUIPMENT_BONUSES items/spirit_vein_sword must exceed items/bamboo_sword")
         required_realms = {"mortal", "qi_refining", "foundation_establishment", "golden_core", "nascent_soul", "soul_formation", "void_refinement", "body_integration", "mahayana", "tribulation", "human_immortal"}
         if set(self.realm_rules) != required_realms:
             raise ValueError("GAME_REALM_RULES must define the complete realm ladder")

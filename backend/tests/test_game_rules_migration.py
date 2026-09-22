@@ -27,7 +27,7 @@ async def test_game_rules_migration_preserves_old_receipts_and_is_idempotent():
             await connection.run_sync(upgrade, "20260918_0007")
             await connection.run_sync(upgrade, "head")
             await connection.run_sync(upgrade, "head")
-            assert (await connection.execute(text("SELECT version_num FROM alembic_version"))).scalar() == "20260921_0009"
+            assert (await connection.execute(text("SELECT version_num FROM alembic_version"))).scalar() == "20260922_0010"
             assert (await connection.execute(text("SELECT count(*) FROM game_rule_versions"))).scalar() == 0
             for table, columns in {
                 "exploration_runs": {"rules_version", "rules_fingerprint"},

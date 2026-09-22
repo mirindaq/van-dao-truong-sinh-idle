@@ -1,8 +1,11 @@
+from collections.abc import Callable
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.game_rules import GameRules, game_rules
 from app.game.battle import BattleEngine, Combatant
+from app.game.data.journeys import journey_definitions
 from app.game.random_service import RandomService
 from app.game.data.items import PILL_KEY
 from app.models.exploration import ExplorationRun
@@ -14,11 +17,13 @@ from app.services.game_state_service import GameError, GameStateService
 
 
 class ExplorationService:
-    def __init__(self, session: AsyncSession, rng: RandomService | None = None, rules: GameRules = game_rules):
+    def __init__(self, session: AsyncSession, rng: RandomService | None = None, rules: GameRules = game_rules, now: Callable[[], datetime] | None = None):
         self.session, self.rng = session, rng or RandomService()
         self.rules = rules
+        self.now = now or (lambda: datetime.now(timezone.utc))
         self.players = PlayerRepository(session)
         self.game = GameStateService(session, self.rng, rules)
+        self.journeys = journey_definitions(rules)
 
     @staticmethod
     def _read(run: ExplorationRun) -> ExplorationRead:
@@ -26,19 +31,68 @@ class ExplorationService:
 
     async def run(self, request: ExplorationRequest) -> ExplorationResponse:
         player = await self.game._load()
-        existing = await self.session.scalar(select(ExplorationRun).where(
-            ExplorationRun.player_id == player.id, ExplorationRun.request_id == str(request.request_id)))
+        existing = await self._by_request(player.id, str(request.request_id))
         if existing:
-            return ExplorationResponse(state=await self.game._state(player), exploration=self._read(existing))
-        if request.location_key != "qingyun_mountain":
+            if existing.location_key != request.location_key:
+                raise GameError("request_conflict")
+            return await self._finish_if_due(player, existing)
+        if request.location_key == "qingyun_mountain":
+            run = await self._begin(player, request, "Đang dò đường Thanh Vân Sơn.", None)
+            await self._resolve(player, run, "Dã Lang", "Thanh Vân Sơn lặng gió; không gặp địch.", self.rules.exploration_reward_stones, self.rules.exploration_reward_pills, None, 0)
+            return await self._commit_response(player, run)
+        journey = self.journeys.get(request.location_key)
+        if journey is None:
             raise GameError("location_unavailable")
-        run = ExplorationRun(player_id=player.id, request_id=str(request.request_id), location_key=request.location_key,
-                             state="resolving", message="Đang dò đường Thanh Vân Sơn.", battle_log=[], combat_snapshot={},
-                             rules_version=self.rules.rules_version, rules_fingerprint=self.rules.fingerprint)
+        active = await self.session.scalar(select(ExplorationRun).where(
+            ExplorationRun.player_id == player.id, ExplorationRun.state == "traveling"))
+        if active is not None:
+            raise GameError("journey_in_progress")
+        available = self.now() + timedelta(minutes=journey.minutes)
+        run = await self._begin(player, request, f"Đang đi {journey.name}.", available)
+        return await self._commit_response(player, run)
+
+    async def get(self, request_id: UUID) -> ExplorationResponse:
+        player = await self.game._load()
+        run = await self._by_request(player.id, str(request_id))
+        if run is None:
+            raise GameError("exploration_not_found", 404)
+        return await self._finish_if_due(player, run)
+
+    async def latest(self) -> ExplorationResponse:
+        player = await self.game._load()
+        run = await self.session.scalar(select(ExplorationRun).where(
+            ExplorationRun.player_id == player.id).order_by(ExplorationRun.id.desc()))
+        if run is None:
+            raise GameError("exploration_not_found", 404)
+        return await self._finish_if_due(player, run)
+
+    async def _by_request(self, player_id: int, request_id: str) -> ExplorationRun | None:
+        return await self.session.scalar(select(ExplorationRun).where(
+            ExplorationRun.player_id == player_id, ExplorationRun.request_id == request_id))
+
+    async def _begin(self, player, request: ExplorationRequest, message: str, available_at: datetime | None) -> ExplorationRun:
+        run = ExplorationRun(
+            player_id=player.id, request_id=str(request.request_id), location_key=request.location_key,
+            state="traveling" if available_at else "resolving", message=message, battle_log=[], combat_snapshot={},
+            available_at=available_at, rules_version=self.rules.rules_version, rules_fingerprint=self.rules.fingerprint,
+        )
         self.session.add(run)
         await self.session.flush()
+        return run
+
+    async def _finish_if_due(self, player, run: ExplorationRun) -> ExplorationResponse:
+        if run.state == "traveling" and run.available_at is not None and self.now() >= run.available_at:
+            journey = self.journeys[run.location_key]
+            await self._resolve(
+                player, run, journey.enemy, f"{journey.name} lặng gió; không gặp địch.",
+                0, 0, journey.item_key, journey.item_quantity,
+            )
+            return await self._commit_response(player, run)
+        return ExplorationResponse(state=await self.game._state(player), exploration=self._read(run))
+
+    async def _resolve(self, player, run: ExplorationRun, enemy: str, empty_message: str, stones: int, pills: int, item_key: str | None, item_quantity: int) -> None:
         if self.rng.roll() < self.rules.exploration_empty_chance:
-            run.state, run.victory, run.message = "empty", True, "Thanh Vân Sơn lặng gió; không gặp địch."
+            run.state, run.victory, run.message = "empty", True, empty_message
         else:
             equipped = await self.game.equipment.list(player.id)
             equipment_bonus = 0
@@ -54,23 +108,31 @@ class ExplorationService:
                 self.rules.battle_player_defense_base + power // self.rules.battle_player_defense_power_divisor,
                 self.rules.battle_player_speed,
             )
-            enemy_combatant = Combatant("Dã Lang", self.rules.battle_enemy_hp, self.rules.battle_enemy_attack,
+            enemy_combatant = Combatant(enemy, self.rules.battle_enemy_hp, self.rules.battle_enemy_attack,
                                         self.rules.battle_enemy_defense, self.rules.battle_enemy_speed)
             run.combat_snapshot = {"player": player_combatant.__dict__, "enemy": enemy_combatant.__dict__}
-            result = BattleEngine(self.rules).resolve(
-                player_combatant, enemy_combatant, self.rng)
+            result = BattleEngine(self.rules).resolve(player_combatant, enemy_combatant, self.rng)
             run.battle_log = result.turns
             run.victory = result.victory
             run.state = "victory" if result.victory else "defeat"
-            run.message = "Bạn đánh bại Dã Lang." if result.victory else "Dã Lang đánh lui bạn."
+            run.message = f"Bạn đánh bại {enemy}." if result.victory else f"{enemy} đánh lui bạn."
             if result.victory:
-                run.reward_stones = self.rules.exploration_reward_stones
-                run.reward_pills = self.rules.exploration_reward_pills
-                player.spirit_stones += self.rules.exploration_reward_stones
-                pill = await self.session.get(OwnedItem, (player.id, PILL_KEY))
-                if pill is None:
-                    raise GameError("inventory_unavailable", 500)
-                pill.quantity += self.rules.exploration_reward_pills
+                run.reward_stones = stones
+                run.reward_pills = pills
+                player.spirit_stones += stones
+                if pills:
+                    pill = await self.session.get(OwnedItem, (player.id, PILL_KEY))
+                    if pill is None:
+                        raise GameError("inventory_unavailable", 500)
+                    pill.quantity += pills
+                if item_key and item_quantity:
+                    run.reward_item_key = item_key
+                    run.reward_item_quantity = item_quantity
+                    owned = await self.session.get(OwnedItem, (player.id, item_key))
+                    if owned is None:
+                        self.session.add(OwnedItem(player_id=player.id, item_key=item_key, quantity=item_quantity))
+                    else:
+                        owned.quantity += item_quantity
         log = await self.game.logs.create("exploration", run.message)
         log.log_metadata = {
             "run_id": run.id,
@@ -80,26 +142,14 @@ class ExplorationService:
             "victory": run.victory,
             "reward_stones": run.reward_stones,
             "reward_pills": run.reward_pills,
+            "reward_item_key": run.reward_item_key,
+            "reward_item_quantity": run.reward_item_quantity,
             "rules_version": run.rules_version,
             "rules_fingerprint": run.rules_fingerprint,
         }
         await self.session.flush()
+
+    async def _commit_response(self, player, run: ExplorationRun) -> ExplorationResponse:
         state = await self.game._state(player)
         await self.session.commit()
         return ExplorationResponse(state=state, exploration=self._read(run))
-
-    async def get(self, request_id: UUID) -> ExplorationResponse:
-        player = await self.game._load()
-        run = await self.session.scalar(select(ExplorationRun).where(
-            ExplorationRun.player_id == player.id, ExplorationRun.request_id == str(request_id)))
-        if run is None:
-            raise GameError("exploration_not_found", 404)
-        return ExplorationResponse(state=await self.game._state(player), exploration=self._read(run))
-
-    async def latest(self) -> ExplorationResponse:
-        player = await self.game._load()
-        run = await self.session.scalar(select(ExplorationRun).where(
-            ExplorationRun.player_id == player.id).order_by(ExplorationRun.id.desc()))
-        if run is None:
-            raise GameError("exploration_not_found", 404)
-        return ExplorationResponse(state=await self.game._state(player), exploration=self._read(run))

@@ -3,6 +3,7 @@ from app.core.game_rules import GameRules, game_rules
 
 PILL_KEY = "items/qi_gathering_pill"
 MANUAL_KEY = "manual/qing_mu_jue"
+HERB_KEY = "items/cloud_mist_herb"
 
 def item_definitions(rules: GameRules = game_rules) -> list[dict]:
     return [
@@ -10,6 +11,8 @@ def item_definitions(rules: GameRules = game_rules) -> list[dict]:
              description=f"Dùng tối đa 1 viên khi đột phá. Tăng {rules.breakthrough_pill_bonus * 100:g} điểm phần trăm cơ hội, tối đa {rules.breakthrough_supported_cap * 100:g}%; tiêu hao cả khi thất bại."),
         dict(key=MANUAL_KEY, name="Thanh Mộc Quyết", category="manual", asset_key=MANUAL_KEY,
              description="Công pháp tìm thấy trong động phủ. Vật phẩm sở hữu, không tiêu hao; chưa có hiệu ứng cộng thêm."),
+        dict(key=HERB_KEY, name="Vân Linh Thảo", category="material", asset_key=HERB_KEY,
+             description=f"Nguyên liệu Hậu Sơn. Mỗi hành trình thắng nhận {rules.journey_material_quantity} phần; chưa dùng để luyện đan."),
     ]
 
 

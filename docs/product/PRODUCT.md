@@ -92,9 +92,12 @@ the world feel alive without click-heavy play.
 - Thanh Mộc Quyết is owned, non-consumable and grants no additional bonus in
   this slice. Only the starting pills are supplied; new sources await Phase 3.
 - Under default rules, equipment grants +5 sword, +3 robe or +2 amulet combat
-  power. Loot, random combat stats, durability and upgrades remain deferred.
-- Exploration resolves immediately. Under default rules Thanh Vân Sơn has a
-  20% empty encounter; victory awards 10 Linh Thạch and 1 Tụ Khí Đan. Seeded
+  power. Journey loot is a configured location reward. Random combat stats,
+  durability and upgrades remain deferred.
+- Thanh Vân Sơn exploration resolves immediately. Under default rules it has a
+  20% empty encounter; victory awards 10 Linh Thạch and 1 Tụ Khí Đan. Hậu Sơn,
+  Ngoại Vi and Linh Mạch are timed journeys of 5, 10 and 15 minutes. One journey
+  may be in progress. Completion grants that place's reward once. Seeded
   randomness and request-id replay prevent a second battle or reward.
 - Under default rules, the living world advances in deterministic 10-minute
   ticks and processes at most 24 hours per return without a background worker.

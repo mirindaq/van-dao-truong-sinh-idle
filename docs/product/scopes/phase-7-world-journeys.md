@@ -5,17 +5,18 @@ Outcome: Người chơi chọn một trong vài địa điểm, hoàn thành hà
 gian và nhận trang bị hoặc nguyên liệu riêng của nơi đó.
 
 ## Open decisions
-- **Owner — lượt tức thì:** Thanh Vân Sơn vẫn xong ngay như hiện tại; ba hành
-  trình mới chạy theo thời gian bên cạnh. (default: giữ lượt tức thì)
-- **Owner — địa điểm:** Hậu Sơn 15 phút, Ngoại Vi 1 giờ, Linh Mạch 4 giờ.
-  (default: đúng ba nơi và ba mốc này)
-- **Owner — phần thưởng:** mỗi nơi một bảng loot, nhận một lần lúc hoàn thành.
-  Hậu Sơn cho nguyên liệu, Ngoại Vi cho trang bị thường, Linh Mạch cho trang bị
-  tốt hơn. Chưa có linh thú hay đan đã luyện. (default: đúng bảng này)
+- **Settled 2026-09-22 (walk) — lượt tức thì:** Thanh Vân Sơn vẫn xong ngay;
+  ba hành trình mới chạy theo thời gian bên cạnh.
+- **Settled 2026-09-22 (walk) — địa điểm:** Hậu Sơn 5 phút, Ngoại Vi 10 phút,
+  Linh Mạch 15 phút, theo UTC server và cấu hình environment.
+- **Settled 2026-09-22 (walk) — phần thưởng:** mỗi nơi một bảng, nhận một lần
+  lúc xong. Hậu Sơn cho nguyên liệu, Ngoại Vi cho trang bị thường, Linh Mạch
+  cho trang bị tốt hơn bộ khởi đầu. Chưa có linh thú hay đan đã luyện.
 
 ## The flow
-1. Người chơi mở Thám Hiểm, thấy lượt Thanh Vân Sơn tức thì và ba hành trình
-   với thời gian, mức nguy hiểm và gợi ý phần thưởng.
+1. Người chơi mở Thám Hiểm, thấy lượt Thanh Vân Sơn tức thì và ba hành trình:
+   Hậu Sơn 5 phút, Ngoại Vi 10 phút, Linh Mạch 15 phút, kèm mức nguy hiểm và
+   gợi ý phần thưởng.
 2. Người chơi bắt đầu một hành trình. Hệ thống lưu nơi, lúc bắt đầu, lúc xong
    và một mã yêu cầu. Mỗi save chỉ có một hành trình đang đi.
 3. Trong lúc chờ, tu luyện, túi đồ và trò chuyện NPC vẫn dùng được. Giờ máy
@@ -86,5 +87,9 @@ Manual, at close:
 - [ ] E-10: Chọn nơi, chờ hoặc mô phỏng đủ giờ, nhận thưởng riêng của nơi đó.
 - [ ] E-11: Reload, xóa storage, mất reply → cùng kết quả, không nhân thưởng.
 - [ ] E-12: Desktop, mobile, 320px và bàn phím đọc được thời gian và kết quả.
+
+## Clarifications
+- 2026-09-22 round 1 — asked: lượt tức thì, thời gian, thưởng — answered:
+  giữ lượt tức thì; 5/10/15 phút; bảng thưởng đề xuất — raised: none.
 
 ## Closed

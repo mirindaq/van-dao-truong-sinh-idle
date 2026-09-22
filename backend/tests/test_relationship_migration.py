@@ -60,7 +60,7 @@ async def test_existing_save_upgrades_to_relationships_and_redeploy_is_idempoten
             await connection.run_sync(upgrade, "head")
             assert (
                 await connection.execute(text("SELECT version_num FROM alembic_version"))
-            ).scalar() == "20260921_0009"
+            ).scalar() == "20260922_0010"
             assert (
                 await connection.execute(text("SELECT count(*) FROM players"))
             ).scalar() == 1
