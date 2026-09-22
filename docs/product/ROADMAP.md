@@ -13,24 +13,9 @@ before broader xianxia systems are added.
 | phase-4-living-world | scopes/phase-4-living-world.md | closed 2026-09-21 |
 | phase-5-game-configuration | scopes/phase-5-game-configuration.md | closed 2026-09-21 |
 | phase-6-npc-relationships | scopes/phase-6-npc-relationships.md | closed 2026-09-22 |
-| phase-7-world-journeys | scopes/phase-7-world-journeys.md | open |
-| phase-8-spirit-pets | scopes/phase-8-spirit-pets.md | not started |
+| phase-7-world-journeys | scopes/phase-7-world-journeys.md | closed 2026-09-22 |
+| phase-8-spirit-pets | scopes/phase-8-spirit-pets.md | open |
 | phase-9-alchemy | scopes/phase-9-alchemy.md | not started |
-
-## phase-7-world-journeys
-
-Outcome: the player can choose among several locations, complete a timed
-journey, and receive location-specific equipment or materials.
-
-Risk retired: exploration can support progression beyond one immediate battle.
-
-Not yet: pet capture lands in `phase-8-spirit-pets`; material crafting lands
-in `phase-9-alchemy`; realtime combat remains dropped.
-
-Human decisions: locations, journey durations and loot tables.
-
-Evidence: journeys persist through closing the browser; retry cannot duplicate
-their battle or reward; each location visibly produces its own encounters.
 
 ## phase-8-spirit-pets
 

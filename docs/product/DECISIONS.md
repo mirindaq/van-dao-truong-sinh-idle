@@ -29,11 +29,4 @@ Phase 3 entries are archived in decisions/phase-3-exploration-battle.md.
 Phase 4 entries are archived in decisions/phase-4-living-world.md.
 Phase 5 entries are archived in decisions/phase-5-game-configuration.md.
 Phase 6 entries are archived in decisions/phase-6-npc-relationships.md.
-
-## 2026-09-22 — phase-7-world-journeys — contract — Hành trình có giờ
-Decision: Thanh Vân Sơn vẫn xong ngay. Hậu Sơn, Ngoại Vi và Linh Mạch chờ 5,
-10 và 15 phút server. Thưởng một lần: nguyên liệu, trang bị thường, trang bị
-tốt hơn bộ khởi đầu.
-Why: Owner giữ lượt đang chạy và rút thời gian để thấy kết quả trong một phiên.
-Recorded in: PRODUCT.md Product Rules;
-scopes/phase-7-world-journeys.md Open decisions, The flow và Resilience.
+Phase 7 entries are archived in decisions/phase-7-world-journeys.md.

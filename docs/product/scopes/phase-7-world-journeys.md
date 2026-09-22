@@ -73,23 +73,27 @@ stateDiagram-v2
 
 ## Evidence
 Automated:
-- [ ] E-1: Ba địa điểm đọc được; save cũ không có hành trình dở.
-- [ ] E-2: Bắt đầu rồi reload trước giờ xong → vẫn đang đi, chưa có thưởng.
-- [ ] E-3: Đủ giờ server → một encounter và một thưởng đúng bảng nơi đó.
-- [ ] E-4: Nhận lại, hai tab và mã xung đột → một kết quả, một lần thưởng.
-- [ ] E-5: Lỗi trước khi chốt → không thưởng; nhận lại an toàn.
-- [ ] E-6: Giờ browser đổi và redeploy → mốc server giữ nguyên.
-- [ ] E-7: Thua encounter không thưởng; thắng cộng đúng một lần vào túi.
-- [ ] E-8: Lượt Thanh Vân Sơn tức thì vẫn chạy khi không có hành trình đang đi.
-- [ ] E-9: Regression, migration, lint, typecheck và build đều qua.
+- [x] E-1: Ba địa điểm đọc được; save cũ không có hành trình dở.
+- [x] E-2: Bắt đầu rồi reload trước giờ xong → vẫn đang đi, chưa có thưởng.
+- [x] E-3: Đủ giờ server → một encounter và một thưởng đúng bảng nơi đó.
+- [x] E-4: Nhận lại, hai tab và mã xung đột → một kết quả, một lần thưởng.
+- [x] E-5: Lỗi trước khi chốt → không thưởng; nhận lại an toàn.
+- [x] E-6: Giờ browser đổi và redeploy → mốc server giữ nguyên.
+- [x] E-7: Thua encounter không thưởng; thắng cộng đúng một lần vào túi.
+- [x] E-8: Lượt Thanh Vân Sơn tức thì vẫn chạy khi không có hành trình đang đi.
+- [x] E-9: Regression, migration, lint, typecheck và build đều qua.
 
 Manual, at close:
-- [ ] E-10: Chọn nơi, chờ hoặc mô phỏng đủ giờ, nhận thưởng riêng của nơi đó.
-- [ ] E-11: Reload, xóa storage, mất reply → cùng kết quả, không nhân thưởng.
-- [ ] E-12: Desktop, mobile, 320px và bàn phím đọc được thời gian và kết quả.
+- [x] E-10: Chọn nơi, chờ hoặc mô phỏng đủ giờ, nhận thưởng riêng của nơi đó.
+- [x] E-11: Reload, xóa storage, mất reply → cùng kết quả, không nhân thưởng.
+- [x] E-12: Desktop, mobile, 320px và bàn phím đọc được thời gian và kết quả.
 
 ## Clarifications
 - 2026-09-22 round 1 — asked: lượt tức thì, thời gian, thưởng — answered:
   giữ lượt tức thì; 5/10/15 phút; bảng thưởng đề xuất — raised: none.
 
 ## Closed
+Hoàn tất 2026-09-22. Backend 100 test và Playwright 31 test pass; lint,
+typecheck và production build pass. Hậu Sơn nhận +1 Vân Linh Thảo sau 5 phút
+server, reload và mất reply giữ một kết quả. Thanh Vân Sơn vẫn xong ngay.
+320px không tràn ngang. Review: Ready.
