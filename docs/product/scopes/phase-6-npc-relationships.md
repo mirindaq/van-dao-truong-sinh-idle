@@ -77,21 +77,21 @@ stateDiagram-v2
 
 ## Evidence
 Automated:
-- [ ] E-1: Save cũ/mới đọc NPC → đúng một relationship/NPC, affinity ban đầu 0.
-- [ ] E-2: Cùng prompt và lựa chọn → receipt/result ổn định; affinity bị chặn 0–100.
-- [ ] E-3: Submit/retry/concurrent hai tab → một receipt và một lần đổi affinity.
-- [ ] E-4: Mất reply rồi phục hồi request id → đọc đúng receipt, không áp lại delta.
-- [ ] E-5: Inject lỗi giữa transaction → relationship/receipt/cooldown cùng rollback.
-- [ ] E-6: Biên cooldown, giờ lùi và browser đổi giờ → server mở đúng một lượt.
-- [ ] E-7: Đổi phiên bản nội dung → receipt cũ giữ nguyên, lượt mới dùng bản mới.
-- [ ] E-8: Migration/restart/redeploy → affinity, cooldown và lịch sử còn nguyên.
-- [ ] E-9: Tương tác không đổi tu vi, vật phẩm, trang bị, chiến lực hoặc thế giới NPC.
-- [ ] E-10: Regression Phase 1–4, migration, lint, typecheck và build đều qua.
+- [x] E-1: Save cũ/mới đọc NPC → đúng một relationship/NPC, affinity ban đầu 0.
+- [x] E-2: Cùng prompt và lựa chọn → receipt/result ổn định; affinity bị chặn 0–100.
+- [x] E-3: Submit/retry/concurrent hai tab → một receipt và một lần đổi affinity.
+- [x] E-4: Mất reply rồi phục hồi request id → đọc đúng receipt, không áp lại delta.
+- [x] E-5: Inject lỗi giữa transaction → relationship/receipt/cooldown cùng rollback.
+- [x] E-6: Biên cooldown, giờ lùi và browser đổi giờ → server mở đúng một lượt.
+- [x] E-7: Đổi phiên bản nội dung → receipt cũ giữ nguyên, lượt mới dùng bản mới.
+- [x] E-8: Migration/restart/redeploy → affinity, cooldown và lịch sử còn nguyên.
+- [x] E-9: Tương tác không đổi tu vi, vật phẩm, trang bị, chiến lực hoặc thế giới NPC.
+- [x] E-10: Regression Phase 1–4, migration, lint, typecheck và build đều qua.
 
 Manual, at close:
-- [ ] E-11: Chọn NPC → trò chuyện → chọn lời đáp → thấy thiện cảm và lịch sử đổi.
-- [ ] E-12: Reload/clear storage/mất mạng rồi retry → cùng kết quả, không tăng hai lần.
-- [ ] E-13: Desktop/mobile/320px và bàn phím → prompt, lựa chọn, cooldown đọc được.
+- [x] E-11: Chọn NPC → trò chuyện → chọn lời đáp → thấy thiện cảm và lịch sử đổi.
+- [x] E-12: Reload/clear storage/mất mạng rồi retry → cùng kết quả, không tăng hai lần.
+- [x] E-13: Desktop/mobile/320px và bàn phím → prompt, lựa chọn, cooldown đọc được.
 
 ## Clarifications
 - 2026-09-21: Owner chốt hình thức tương tác ba lựa chọn; flow, entities,
@@ -102,3 +102,7 @@ Manual, at close:
   deferred và evidence giữ nguyên, không phát sinh điểm mở mới.
 
 ## Closed
+Hoàn tất 2026-09-22. Backend 95 test và Playwright 30 test pass; lint, typecheck
+và production build pass. Agent-browser chọn lời đáp của Tạ Vô Trần, thấy
+thiện cảm 8/100, lịch sử, cooldown, desktop/390/320px không tràn ngang.
+Playwright phủ reload, mất reply và tab thua. Review: Ready.

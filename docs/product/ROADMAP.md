@@ -12,30 +12,10 @@ before broader xianxia systems are added.
 | phase-3-exploration-battle | scopes/phase-3-exploration-battle.md | closed 2026-09-18 |
 | phase-4-living-world | scopes/phase-4-living-world.md | closed 2026-09-21 |
 | phase-5-game-configuration | scopes/phase-5-game-configuration.md | closed 2026-09-21 |
-| phase-6-npc-relationships | scopes/phase-6-npc-relationships.md | open |
-| phase-7-world-journeys | scopes/phase-7-world-journeys.md | not started |
+| phase-6-npc-relationships | scopes/phase-6-npc-relationships.md | closed 2026-09-22 |
+| phase-7-world-journeys | scopes/phase-7-world-journeys.md | open |
 | phase-8-spirit-pets | scopes/phase-8-spirit-pets.md | not started |
 | phase-9-alchemy | scopes/phase-9-alchemy.md | not started |
-
-## phase-6-npc-relationships
-
-Outcome: the player can meet a living-world NPC, choose a response, and return
-later to see the saved relationship and conversation history.
-
-Risk retired: Phase 4 NPCs become characters the player can know rather than
-status cards that only advance on their own.
-
-Not yet: quests, NPC combat, gifts, romance/dao partners and relationship
-rewards land in a later relationship expansion; multiple maps and equipment
-loot land in `phase-7-world-journeys`; pets land in `phase-8-spirit-pets`;
-crafting lands in `phase-9-alchemy`.
-
-Human decisions: first interaction format, encounter cadence, and whether
-affinity changes anything beyond dialogue/news in this slice.
-
-Evidence: a player choice produces one saved interaction and affinity change;
-duplicate/retried choices do not apply twice; the NPC profile and history
-survive reload, restart and a lost response.
 
 ## phase-7-world-journeys
 
