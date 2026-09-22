@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.game_rules import GameRules, game_rules
 from app.game.breakthrough import BreakthroughEngine
 from app.game.cultivation import CultivationEngine, CultivationInput
-from app.game.data.equipment import equipment_definitions
+from app.game.data.equipment import equipment_definitions, pack_definitions
 from app.game.data.items import item_definitions
 from app.game.data.realms import realm_definitions, required_exp_for_stage
 from app.game.random_service import RandomService
@@ -32,6 +32,11 @@ INITIAL_ROOT_IDENTITY = {
 }
 
 
+def _server_now() -> datetime:
+    from app.services.exploration_service import server_now
+    return server_now()
+
+
 class GameError(Exception):
     def __init__(self, code: str, status: int = 409):
         self.code = code
@@ -45,6 +50,7 @@ class GameStateService:
         self.realm_definitions = realm_definitions(rules)
         self.item_definitions = item_definitions(rules)
         self.equipment_definitions = equipment_definitions(rules)
+        self.pack_definitions = pack_definitions(rules)
         self.players = PlayerRepository(session)
         self.realms = RealmRepository(session)
         self.logs = GameLogRepository(session)
@@ -113,7 +119,7 @@ class GameStateService:
         if not player.equipment_pack_claimed:
             await self.equipment.claim(
                 player.id,
-                self.equipment_definitions,
+                self.pack_definitions,
                 self.rules.equipment_pack_quantity,
             )
             player.equipment_pack_claimed = True
@@ -315,7 +321,7 @@ class GameStateService:
             ),
             active_pet=None, dao_partner=None,
             recent_logs=[GameLogRead.model_validate(log, from_attributes=True) for log in await self.logs.recent()],
-            server_time=datetime.now(timezone.utc), breakthrough=preview,
+            server_time=_server_now(), breakthrough=preview,
             offline_report=OfflineRead(id=report.id, **report.log_metadata) if report else None,
         )
 

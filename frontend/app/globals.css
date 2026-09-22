@@ -379,6 +379,12 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *:before, htm
 .battle-log li { display: grid; grid-template-columns: 80px 1fr auto; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .battle-log small { color: var(--muted); }
 .exploration-empty { margin: 24px 0; }
+.journey-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 22px 0; }
+.journey-card { min-width: 0; border: 1px solid var(--line); background: var(--surface); padding: 18px; }
+.journey-card h2 { margin: 4px 0 8px; font-size: 22px; }
+.journey-card p, .journey-card small { overflow-wrap: anywhere; }
+.journey-card button { width: 100%; margin-top: 14px; }
+@media (max-width: 900px) { .journey-list { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .exploration-location, .exploration-result { align-items: stretch; flex-direction: column; padding: 18px; } .exploration-location > button { width: 100%; } .battle-log li { grid-template-columns: 1fr; gap: 2px; } }
 
 /* Living world */

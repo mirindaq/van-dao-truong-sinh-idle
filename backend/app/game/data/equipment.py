@@ -20,3 +20,8 @@ def equipment_definitions(rules: GameRules = game_rules) -> list[dict]:
 
 
 EQUIPMENT_DEFINITIONS = equipment_definitions()
+PACK_KEYS = ("items/bamboo_sword", "items/cloth_robe", "items/wood_amulet")
+
+
+def pack_definitions(rules: GameRules = game_rules) -> list[dict]:
+    return [item for item in equipment_definitions(rules) if item["key"] in PACK_KEYS]

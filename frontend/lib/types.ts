@@ -56,8 +56,9 @@ export type GameState = {
 
 export type EquipmentSlot = "weapon" | "head" | "body" | "feet" | "ring" | "amulet";
 export type Exploration = {
-  id: number; request_id: string; location_key: string; state: "resolving" | "victory" | "defeat" | "empty";
+  id: number; request_id: string; location_key: string; state: "resolving" | "traveling" | "victory" | "defeat" | "empty";
   message: string; victory: boolean | null; reward_stones: number; reward_pills: number;
+  reward_item_key: string | null; reward_item_quantity: number; available_at: string | null;
   battle_log: Array<{ turn: number; actor: string; damage: number; target_hp: number }>;
   rules_version: number; rules_fingerprint: string;
   created_at: string;

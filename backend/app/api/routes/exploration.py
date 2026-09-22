@@ -21,3 +21,8 @@ async def get_run(request_id: UUID, session: AsyncSession = Depends(get_session)
 @router.get('/latest', response_model=ExplorationResponse)
 async def latest(session: AsyncSession = Depends(get_session)):
     return await ExplorationService(session).latest()
+
+
+@router.get('/journey', response_model=ExplorationResponse)
+async def journey(session: AsyncSession = Depends(get_session)):
+    return await ExplorationService(session).current_journey()

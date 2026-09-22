@@ -31,6 +31,40 @@ test("exploration stays usable on mobile and 320px", async ({ page }) => {
   }
 });
 
+test("a journey waits, then claims one reward, and survives a lost reply", async ({ page, request }) => {
+  const start = "2026-09-22T00:00:00+00:00";
+  await request.post(`${backend}/_test/clock`, { data: { at: start, seed: 2 } });
+  await page.goto("/#exploration");
+  await expect(page.getByRole("article", { name: "Hậu Sơn" })).toContainText("5 PHÚT");
+  await expect(page.getByRole("article", { name: "Ngoại Vi" })).toContainText("10 PHÚT");
+  await expect(page.getByRole("article", { name: "Linh Mạch" })).toContainText("15 PHÚT");
+  await expect(page.getByRole("article", { name: "Hậu Sơn" })).toContainText("Vân Linh Thảo");
+  const hauSon = page.getByRole("button", { name: "BẮT ĐẦU HẬU SƠN" });
+  await hauSon.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("article", { name: "Hậu Sơn" })).toContainText("Còn");
+  await expect(page.getByRole("button", { name: "BẮT ĐẦU THÁM HIỂM" })).toBeEnabled();
+  await request.post(`${backend}/_test/clock`, { data: { at: "2026-09-22T00:05:00+00:00" } });
+  await page.getByRole("button", { name: "NHẬN KẾT QUẢ HẬU SƠN" }).click();
+  await expect(page.getByRole("article", { name: "Hậu Sơn" })).toContainText("+1 Vân Linh Thảo");
+  await page.reload();
+  await expect(page.getByRole("article", { name: "Hậu Sơn" })).toContainText("+1 Vân Linh Thảo");
+  await page.route("**/api/exploration/run", async route => {
+    const url = new URL(route.request().url());
+    await route.fetch({ url: backend + url.pathname.replace(/^\/api/, ""), method: "POST" });
+    await route.abort();
+  });
+  await page.getByRole("button", { name: "BẮT ĐẦU NGOẠI VI" }).click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await page.unroute("**/api/exploration/run");
+  await page.reload();
+  await expect(page.getByRole("article", { name: "Ngoại Vi" })).toContainText("Còn");
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+});
+
 test("lost exploration response can be recovered from latest run", async ({ page }) => {
   await page.goto("/#exploration");
   await page.route("**/api/exploration/run", async route => {

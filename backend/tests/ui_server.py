@@ -79,4 +79,22 @@ async def prepare(mode: str):
                 await session.commit()
     seed = 2 if mode == "failure" else 1
     game_state_service.RandomService = lambda: RandomService(seed=seed)
+    from app.services.exploration_service import ExplorationService
+    ExplorationService.test_now = None
+    ExplorationService.test_rng_factory = None
+    return {"ready": True}
+
+
+@app.post("/_test/clock")
+async def clock(body: dict):
+    from app.services.exploration_service import ExplorationService
+    raw = body.get("at")
+    if raw:
+        moment = datetime.fromisoformat(raw)
+        ExplorationService.test_now = moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)
+    elif "at" in body:
+        ExplorationService.test_now = None
+    if body.get("seed") is not None:
+        chosen = int(body["seed"])
+        ExplorationService.test_rng_factory = lambda chosen=chosen: RandomService(seed=chosen)
     return {"ready": True}

@@ -16,11 +16,19 @@ from app.schemas.exploration import ExplorationRead, ExplorationRequest, Explora
 from app.services.game_state_service import GameError, GameStateService
 
 
+def server_now() -> datetime:
+    return ExplorationService.test_now or datetime.now(timezone.utc)
+
+
 class ExplorationService:
+    test_now: datetime | None = None
+    test_rng_factory: Callable[[], RandomService] | None = None
+
     def __init__(self, session: AsyncSession, rng: RandomService | None = None, rules: GameRules = game_rules, now: Callable[[], datetime] | None = None):
-        self.session, self.rng = session, rng or RandomService()
+        self.session = session
+        self.rng = rng or (ExplorationService.test_rng_factory() if ExplorationService.test_rng_factory else RandomService())
         self.rules = rules
-        self.now = now or (lambda: datetime.now(timezone.utc))
+        self.now = now or (lambda: ExplorationService.test_now or datetime.now(timezone.utc))
         self.players = PlayerRepository(session)
         self.game = GameStateService(session, self.rng, rules)
         self.journeys = journey_definitions(rules)
@@ -62,6 +70,18 @@ class ExplorationService:
         player = await self.game._load()
         run = await self.session.scalar(select(ExplorationRun).where(
             ExplorationRun.player_id == player.id).order_by(ExplorationRun.id.desc()))
+        if run is None:
+            raise GameError("exploration_not_found", 404)
+        return await self._finish_if_due(player, run)
+
+    async def current_journey(self) -> ExplorationResponse:
+        player = await self.game._load()
+        run = await self.session.scalar(select(ExplorationRun).where(
+            ExplorationRun.player_id == player.id, ExplorationRun.state == "traveling"))
+        if run is None:
+            run = await self.session.scalar(select(ExplorationRun).where(
+                ExplorationRun.player_id == player.id, ExplorationRun.location_key != "qingyun_mountain",
+            ).order_by(ExplorationRun.id.desc()))
         if run is None:
             raise GameError("exploration_not_found", 404)
         return await self._finish_if_due(player, run)
