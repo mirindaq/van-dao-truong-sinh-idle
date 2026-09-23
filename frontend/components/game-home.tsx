@@ -5,7 +5,7 @@ import { ArrowRight, Check, CloudOff, Flame, Leaf, LockKeyhole, Mountain, Refres
 import { gameApi, GameApiError } from "@/lib/api";
 import { assetPath } from "@/lib/assets";
 import { duration, number, percent } from "@/lib/format";
-import type { BreakthroughPreview, BreakthroughResult, GameState } from "@/lib/types";
+import type { AlchemyRecipe, BreakthroughPreview, BreakthroughResult, DaoPartner, GameState, PetSpecies } from "@/lib/types";
 import { GameShell, destinations } from "./game-shell";
 import { GameModal, GameTimeline, SpiritualRootBadge, StatRow } from "./game-ui";
 import { CultivationView } from "./cultivation-view";
@@ -13,6 +13,9 @@ import { CharacterView, SkillsView } from "./character-view";
 import { EquipmentView } from "./equipment-view";
 import { ExplorationView } from "./exploration-view";
 import { InventoryView } from "./inventory-view";
+import { PetsView } from "./pets-view";
+import { AlchemyView } from "./alchemy-view";
+import { PartnerView } from "./partner-view";
 import { clearPending, readPending, writePending } from "@/lib/pending-breakthrough";
 import type { BreakthroughRequest, EquipmentSlot, Exploration, WorldState } from "@/lib/types";
 import { WorldReportDetails, WorldView } from "./world-view";
@@ -28,6 +31,9 @@ export function GameHome() {
   const [error, setError] = useState<string | null>(null);
   const [disconnected, setDisconnected] = useState(false);
   const [view, setView] = useState("home");
+  const [species, setSpecies] = useState<PetSpecies[] | null>(null);
+  const [recipes, setRecipes] = useState<AlchemyRecipe[] | null>(null);
+  const [partners, setPartners] = useState<DaoPartner[] | null>(null);
   const [modal, setModal] = useState<Modal>(null);
   const [preview, setPreview] = useState<BreakthroughPreview | null>(null);
   const [result, setResult] = useState<BreakthroughResult | null>(null);
@@ -124,6 +130,18 @@ export function GameHome() {
 
   useEffect(() => { paused.current = modal !== null || Boolean(state?.offline_report) || noSave; }, [modal, state?.offline_report, noSave]);
   useEffect(() => {
+    if (view !== "pets" || !state || species || busy) return;
+    void execute("pets", async () => { setSpecies((await gameApi.pets()).species); });
+  }, [view, state, species, busy, execute]);
+  useEffect(() => {
+    if (view !== "alchemy" || !state || recipes || busy) return;
+    void execute("alchemy", async () => { setRecipes((await gameApi.alchemy()).recipes); });
+  }, [view, state, recipes, busy, execute]);
+  useEffect(() => {
+    if (view !== "partner" || !state || partners || busy) return;
+    void execute("partners", async () => { setPartners((await gameApi.partners()).partners); });
+  }, [view, state, partners, busy, execute]);
+  useEffect(() => {
     const refresh = () => {
       if (!document.hidden && !paused.current) void execute("sync", sync);
     };
@@ -141,6 +159,24 @@ export function GameHome() {
     catch (e) { setEquipmentUncertain(true); setDisconnected(true); throw e; }
   });
   const equip = (slot: EquipmentSlot, key: string | null) => updateEquipment(() => gameApi.equip(slot, key));
+  const bondPet = (key: string) => void execute("pets", async () => {
+    const response = await gameApi.bondPet(crypto.randomUUID(), key);
+    acceptState(response.state);
+  });
+  const restPet = () => void execute("pets", async () => { acceptState(await gameApi.restPet()); });
+  const recallPet = () => void execute("pets", async () => { acceptState(await gameApi.recallPet()); });
+  const craft = (recipe: AlchemyRecipe) => void execute("alchemy", async () => {
+    const response = await gameApi.craft(crypto.randomUUID(), recipe.key, recipe.ingredient_quantity);
+    acceptState(response.state);
+  });
+  const bondPartner = (npcKey: string) => void execute("partners", async () => {
+    const next = await gameApi.bondPartner(npcKey);
+    acceptState(next); setPartners((await gameApi.partners()).partners);
+  });
+  const dismissPartner = (npcKey: string) => void execute("partners", async () => {
+    const next = await gameApi.dismissPartner(npcKey);
+    acceptState(next); setPartners((await gameApi.partners()).partners);
+  });
   const explore = () => void execute("exploration", async () => {
     if (!state) return;
     const requestId = readPendingExploration(state.player.id) ?? crypto.randomUUID();
@@ -230,7 +266,7 @@ export function GameHome() {
     {equipmentUncertain && <div className="equipment-recovery" role="status"><p>Chưa xác nhận được thay đổi trang bị. Đồng bộ để xem trạng thái đã lưu trước khi thao tác tiếp.</p><button className="secondary-button" disabled={!!busy} onClick={() => void execute("sync", sync)}>Đồng bộ trang bị</button></div>}
     {disconnected && <p className="connection-note" role="status">Đang hiển thị lần lưu gần nhất. Tu vi sẽ được đồng bộ khi kết nối trở lại.</p>}
     {!modal && !offline && view !== "world" && worldState?.report && <section className="world-report" aria-label="Trong lúc bạn vắng mặt"><div><p className="eyebrow">TRONG LÚC BẠN VẮNG MẶT</p><h2>Thiên hạ đã chuyển mình</h2><WorldReportDetails report={worldState.report} /></div><div className="world-report-actions"><button className="secondary-button" onClick={() => navigate("world")}><ArrowRight size={16} />XEM THIÊN HẠ</button><button className="secondary-button" disabled={!!busy} onClick={() => acknowledgeWorld(worldState.report!.id)}><Check size={16} />ĐÃ ĐỌC</button></div></section>}
-    {view === "home" || view === "cultivation" ? <CultivationView state={state} detailed={view === "cultivation"} eta={eta} navigate={navigate} onBreakthrough={showPreview} busy={!!busy} /> : view === "exploration" ? <><ExplorationView state={state} result={explorationResult} journey={journey} busy={!!busy} elapsed={elapsed} onExplore={explore} onJourney={beginJourney} onClaim={claimJourney} />{explorationResult && <p className="center muted">Bộ luật v{explorationResult.rules_version} · {explorationResult.rules_fingerprint}</p>}</> : view === "world" ? <WorldView world={worldState} playerId={state.player.id} busy={!!busy} onSync={() => void execute("sync", sync)} onAcknowledge={acknowledgeWorld} onLoadMore={loadMoreWorld} /> : view === "character" ? <CharacterView state={state} navigate={navigate} /> : view === "inventory" ? <InventoryView state={state} navigate={navigate} onClaim={() => updateEquipment(gameApi.claimEquipment)} disabled={!!busy || equipmentUncertain} /> : view === "skills" ? <SkillsView state={state} navigate={navigate} /> : view === "equipment" ? <EquipmentView state={state} navigate={navigate} onEquip={equip} disabled={!!busy || equipmentUncertain} /> : view === "journal" ? <section className="journal-page"><div className="page-heading"><div><p className="eyebrow">DẤU CHÂN TRÊN TIÊN LỘ</p><h1>Nhật Ký</h1></div><span>Ghi chép gần đây</span></div><GameTimeline logs={state.recent_logs} /></section> : <section className="locked-page" style={{ backgroundImage: `url(${assetPath("maps/qingyun_mountain")})` }}><selected.icon size={40} /><p className="eyebrow">TIÊN DUYÊN CHƯA TỚI</p><h1>{selected.name}</h1><span className="locked-tag"><LockKeyhole size={14} />Chưa mở</span><p>{view === "pets" ? "Bạn chưa ký khế ước với bất kỳ linh thú nào." : view === "partner" ? "Tiên lộ dài đằng đẵng. Hiện tại chưa có người cùng bạn đồng hành." : view === "rift" ? "Sau màn sương, một cánh cửa cổ vẫn đang ngủ yên." : "Một chương mới trên tiên lộ vẫn còn đang khép lại."}</p><button className="secondary-button" onClick={() => navigate("cultivation")}><Leaf size={17} />Trở về tu luyện<ArrowRight size={16} /></button></section>}
+    {view === "home" || view === "cultivation" ? <CultivationView state={state} detailed={view === "cultivation"} eta={eta} navigate={navigate} onBreakthrough={showPreview} busy={!!busy} /> : view === "exploration" ? <><ExplorationView state={state} result={explorationResult} journey={journey} busy={!!busy} elapsed={elapsed} onExplore={explore} onJourney={beginJourney} onClaim={claimJourney} />{explorationResult && <p className="center muted">Bộ luật v{explorationResult.rules_version} · {explorationResult.rules_fingerprint}</p>}</> : view === "world" ? <WorldView world={worldState} playerId={state.player.id} busy={!!busy} onSync={() => void execute("sync", sync)} onAcknowledge={acknowledgeWorld} onLoadMore={loadMoreWorld} /> : view === "character" ? <CharacterView state={state} navigate={navigate} /> : view === "inventory" ? <InventoryView state={state} navigate={navigate} onClaim={() => updateEquipment(gameApi.claimEquipment)} disabled={!!busy || equipmentUncertain} /> : view === "skills" ? <SkillsView state={state} navigate={navigate} /> : view === "equipment" ? <EquipmentView state={state} navigate={navigate} onEquip={equip} disabled={!!busy || equipmentUncertain} /> : view === "journal" ? <section className="journal-page"><div className="page-heading"><div><p className="eyebrow">DẤU CHÂN TRÊN TIÊN LỘ</p><h1>Nhật Ký</h1></div><span>Ghi chép gần đây</span></div><GameTimeline logs={state.recent_logs} /></section> : view === "pets" ? <PetsView state={state} species={species} busy={!!busy} onBond={bondPet} onRest={restPet} onRecall={recallPet} /> : view === "alchemy" ? <AlchemyView state={state} recipes={recipes} busy={!!busy} onCraft={craft} /> : view === "partner" ? <PartnerView state={state} partners={partners} busy={!!busy} onBond={bondPartner} onDismiss={dismissPartner} /> : <section className="locked-page" style={{ backgroundImage: `url(${assetPath("maps/qingyun_mountain")})` }}><selected.icon size={40} /><p className="eyebrow">TIÊN DUYÊN CHƯA TỚI</p><h1>{selected.name}</h1><span className="locked-tag"><LockKeyhole size={14} />Chưa mở</span><p>{view === "rift" ? "Sau màn sương, một cánh cửa cổ vẫn đang ngủ yên." : "Một chương mới trên tiên lộ vẫn còn đang khép lại."}</p><button className="secondary-button" onClick={() => navigate("cultivation")}><Leaf size={17} />Trở về tu luyện<ArrowRight size={16} /></button></section>}
     {modal === "reveal" && <GameModal title="Trắc Linh Thạch"><div className="reveal-stone"><Leaf size={55} /></div><p className="center muted">Linh thạch khẽ sáng. Một luồng sinh khí lan tỏa.</p><SpiritualRootBadge root={state.spiritual_root} /><StatRow label="Hệ số tu luyện" value={`×${number(state.spiritual_root.cultivation_modifier, 2)}`} /><StatRow label="Hệ số đột phá" value={`×${number(state.spiritual_root.breakthrough_modifier, 2)}`} /><button className="primary-button full-width" onClick={() => { closeModal(); navigate("home"); }}>BƯỚC VÀO TIÊN LỘ<ArrowRight size={18} /></button></GameModal>}
     {modal === "breakthrough" && preview && <GameModal title={result ? result.success ? "Đột phá thành công" : "Đột phá thất bại" : "Đột phá cảnh giới"} onClose={closeModal} busy={!!busy}>
       {result ? <div className={`breakthrough-result ${result.success ? "success" : "failure"}`}>

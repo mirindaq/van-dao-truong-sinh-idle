@@ -1,20 +1,27 @@
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.game_rules import GameRules, game_rules
 from app.game.breakthrough import BreakthroughEngine
 from app.game.cultivation import CultivationEngine, CultivationInput
+from app.game.data.alchemy import alchemy_definitions
 from app.game.data.equipment import equipment_definitions, pack_definitions
-from app.game.data.items import item_definitions
+from app.game.data.items import HERB_KEY, MANUAL_KEY, PILL_KEY, item_definitions
+from app.game.data.partners import PARTNERS, partner_stack
+from app.game.data.pets import pet_definitions
 from app.game.data.realms import realm_definitions, required_exp_for_stage
 from app.game.random_service import RandomService
-from app.game.data.items import MANUAL_KEY, PILL_KEY
+from app.models.alchemy import AlchemyReceipt
+from app.models.partner import DaoPartner
+from app.models.relationship import NpcRelationship
+from app.models.item import Item, OwnedItem
+from app.models.spirit_pet import SpiritPetBond, SpiritPetReceipt
 from app.repositories.inventory_repository import InventoryRepository
 from app.repositories.equipment_repository import EquipmentRepository
 from app.models.player import Player
-from app.models.item import Item
 from app.models.realm import Realm
 from app.models.spiritual_root import SpiritualRoot
 from app.repositories.game_log_repository import GameLogRepository
@@ -23,7 +30,10 @@ from app.repositories.realm_repository import RealmRepository
 from app.schemas.game_state import (
     BreakthroughRead, BreakthroughRequest, BreakthroughResult, BreakthroughSelection, CultivationRead,
     GameLogRead, GameStateRead, InventoryRead, OfflineRead, PlayerRead, RealmRead, SpiritualRootRead,
-    EquipRequest, EquippedRead,
+    AlchemyCatalogRead, AlchemyRecipeRead, CraftReceiptRead, CraftRequest, CraftResponse,
+    DaoPartnerRead, PartnerRosterRead,
+    EquipRequest, EquippedRead, PetBondRequest, PetBondResponse, PetCatalogRead, PetReceiptRead,
+    PetSpeciesRead, SpiritPetRead,
 )
 
 INITIAL_ROOT_IDENTITY = {
@@ -222,12 +232,243 @@ class GameStateService:
         await self.session.commit()
         return result
 
+    async def list_pets(self) -> PetCatalogRead:
+        player = await self._load()
+        await self._apply_progress(player)
+        bond = await self._bond(player.id)
+        await self.session.commit()
+        return PetCatalogRead(species=self._species(), spirit_pet=self._spirit_pet(bond))
+
+    async def bond_pet(self, request: PetBondRequest) -> PetBondResponse:
+        player = await self._load()
+        receipt = await self._pet_receipt(player.id, request.request_id)
+        if receipt is not None:
+            if receipt.pet_key != request.pet_key:
+                raise GameError("pet_request_conflict")
+            await self._apply_progress(player)
+            state = await self._state(player)
+            await self.session.commit()
+            return PetBondResponse(state=state, receipt=self._receipt_read(receipt))
+        if request.pet_key not in self.rules.pet_rules:
+            raise GameError("unknown_pet")
+        if await self._bond(player.id) is not None:
+            raise GameError("pet_already_bonded")
+        await self._apply_progress(player)
+        now = _server_now()
+        bond = SpiritPetBond(
+            player_id=player.id, pet_key=request.pet_key, active=True,
+            request_id=str(request.request_id), bonded_at=now, state_changed_at=now,
+        )
+        receipt = SpiritPetReceipt(
+            player_id=player.id, request_id=str(request.request_id),
+            pet_key=request.pet_key, created_at=now,
+        )
+        self.session.add(bond)
+        self.session.add(receipt)
+        await self.session.flush()
+        state = await self._state(player)
+        await self.session.commit()
+        return PetBondResponse(state=state, receipt=self._receipt_read(receipt))
+
+    async def rest_pet(self) -> GameStateRead:
+        return await self._set_pet_active(False)
+
+    async def recall_pet(self) -> GameStateRead:
+        return await self._set_pet_active(True)
+
+    async def list_partners(self) -> PartnerRosterRead:
+        player = await self._load()
+        partners = await self._partner_roster(player.id)
+        await self.session.commit()
+        return PartnerRosterRead(partners=partners)
+
+    async def bond_partner(self, npc_key: str) -> GameStateRead:
+        player = await self._load()
+        self._known_partner(npc_key)
+        affinity = await self._affinity(player.id, npc_key, lock=True)
+        existing = await self._dao_partner(player.id, npc_key)
+        if existing is not None and existing.active:
+            state = await self._state(player)
+            await self.session.commit()
+            return state
+        if affinity < self.rules.dao_partner_affinity:
+            raise GameError("partner_not_ready")
+        await self._apply_progress(player)
+        now = _server_now()
+        if existing is None:
+            self.session.add(DaoPartner(
+                player_id=player.id, npc_key=npc_key, active=True, bonded_at=now, dismissed_at=None,
+            ))
+        else:
+            existing.active = True
+            existing.dismissed_at = None
+        await self.session.flush()
+        state = await self._state(player)
+        await self.session.commit()
+        return state
+
+    async def dismiss_partner(self, npc_key: str) -> GameStateRead:
+        player = await self._load()
+        self._known_partner(npc_key)
+        existing = await self._dao_partner(player.id, npc_key)
+        if existing is None or not existing.active:
+            raise GameError("partner_not_bonded")
+        await self._apply_progress(player)
+        existing.active = False
+        existing.dismissed_at = _server_now()
+        state = await self._state(player)
+        await self.session.commit()
+        return state
+
+    def _known_partner(self, npc_key: str) -> None:
+        if npc_key not in {key for key, _name in PARTNERS}:
+            raise GameError("unknown_partner")
+
+    async def _affinity(self, player_id: int, npc_key: str, lock: bool = False) -> int:
+        query = select(NpcRelationship).where(
+            NpcRelationship.player_id == player_id, NpcRelationship.npc_key == npc_key,
+        )
+        relationship = await self.session.scalar(query.with_for_update() if lock else query)
+        return relationship.affinity if relationship is not None else 0
+
+    async def _dao_partner(self, player_id: int, npc_key: str) -> DaoPartner | None:
+        return await self.session.scalar(select(DaoPartner).where(
+            DaoPartner.player_id == player_id, DaoPartner.npc_key == npc_key,
+        ))
+
+    async def _active_partner_count(self, player_id: int) -> int:
+        rows = await self.session.scalars(select(DaoPartner).where(
+            DaoPartner.player_id == player_id, DaoPartner.active.is_(True),
+        ))
+        return len(list(rows))
+
+    async def _partner_roster(self, player_id: int) -> list[DaoPartnerRead]:
+        roster = []
+        for key, name in PARTNERS:
+            bond = await self._dao_partner(player_id, key)
+            roster.append(DaoPartnerRead(
+                npc_key=key, name=name, affinity=await self._affinity(player_id, key),
+                active=bool(bond and bond.active),
+            ))
+        return roster
+
+    async def list_alchemy(self) -> AlchemyCatalogRead:
+        player = await self._load()
+        await self._apply_progress(player)
+        inventory = await self.inventory.list(player.id)
+        await self.session.commit()
+        return AlchemyCatalogRead(
+            recipes=[AlchemyRecipeRead.model_validate(recipe) for recipe in alchemy_definitions(self.rules)],
+            herb_quantity=self._quantity(inventory, HERB_KEY),
+            pill_quantity=self._quantity(inventory, PILL_KEY),
+        )
+
+    async def craft(self, request: CraftRequest) -> CraftResponse:
+        player = await self._load()
+        receipt = await self._alchemy_receipt(player.id, request.request_id)
+        if receipt is not None:
+            if receipt.recipe_key != request.recipe_key or receipt.ingredient_quantity != request.ingredient_quantity:
+                raise GameError("alchemy_request_conflict")
+            state = await self._state(player)
+            await self.session.commit()
+            return CraftResponse(state=state, receipt=self._craft_receipt_read(receipt))
+        recipe = self.rules.alchemy_recipes.get(request.recipe_key)
+        if recipe is None or request.ingredient_quantity != recipe.ingredient_quantity:
+            raise GameError("alchemy_request_conflict" if recipe is not None else "unknown_recipe")
+        herb = await self.inventory.get(player.id, recipe.ingredient_key)
+        if herb is None or herb.quantity < recipe.ingredient_quantity:
+            raise GameError("insufficient_herbs")
+        pill = await self.inventory.get(player.id, recipe.result_key)
+        if pill is None:
+            pill = OwnedItem(player_id=player.id, item_key=recipe.result_key, quantity=0)
+            self.session.add(pill)
+        herb.quantity -= recipe.ingredient_quantity
+        pill.quantity += recipe.result_quantity
+        receipt = AlchemyReceipt(
+            player_id=player.id, request_id=str(request.request_id), recipe_key=request.recipe_key,
+            ingredient_key=recipe.ingredient_key, ingredient_quantity=recipe.ingredient_quantity,
+            result_key=recipe.result_key, result_quantity=recipe.result_quantity, created_at=_server_now(),
+        )
+        self.session.add(receipt)
+        await self.session.flush()
+        state = await self._state(player)
+        await self.session.commit()
+        return CraftResponse(state=state, receipt=self._craft_receipt_read(receipt))
+
+    @staticmethod
+    def _quantity(inventory, key: str) -> int:
+        owned = next((item for item in inventory if item.item_key == key), None)
+        return owned.quantity if owned is not None else 0
+
+    def _craft_receipt_read(self, receipt: AlchemyReceipt) -> CraftReceiptRead:
+        return CraftReceiptRead(
+            request_id=receipt.request_id, recipe_key=receipt.recipe_key,
+            ingredient_key=receipt.ingredient_key, ingredient_quantity=receipt.ingredient_quantity,
+            result_key=receipt.result_key, result_quantity=receipt.result_quantity,
+        )
+
+    async def _alchemy_receipt(self, player_id: int, request_id) -> AlchemyReceipt | None:
+        return await self.session.scalar(select(AlchemyReceipt).where(
+            AlchemyReceipt.player_id == player_id,
+            AlchemyReceipt.request_id == str(request_id),
+        ))
+
+    async def _set_pet_active(self, active: bool) -> GameStateRead:
+        player = await self._load()
+        bond = await self._bond(player.id)
+        if bond is None:
+            raise GameError("no_pet")
+        if bond.active != active:
+            await self._apply_progress(player)
+            bond.active = active
+            bond.state_changed_at = _server_now()
+        state = await self._state(player)
+        await self.session.commit()
+        return state
+
+    def pet_combat_bonus(self, bond: SpiritPetBond | None) -> int:
+        if bond is None or not bond.active:
+            return 0
+        return self.rules.pet_rules[bond.pet_key].combat_bonus
+
+    def _pet_cultivation(self, bond: SpiritPetBond | None) -> tuple[float, float]:
+        if bond is None or not bond.active:
+            return 1, 0
+        rule = self.rules.pet_rules[bond.pet_key]
+        return rule.cultivation_factor, rule.cultivation_flat_per_minute
+
+    def _species(self) -> list[PetSpeciesRead]:
+        return [PetSpeciesRead.model_validate(pet) for pet in pet_definitions(self.rules)]
+
+    def _spirit_pet(self, bond: SpiritPetBond | None) -> SpiritPetRead | None:
+        if bond is None:
+            return None
+        species = next(pet for pet in self._species() if pet.key == bond.pet_key)
+        return SpiritPetRead(key=bond.pet_key, name=species.name, active=bond.active)
+
+    def _receipt_read(self, receipt: SpiritPetReceipt) -> PetReceiptRead:
+        return PetReceiptRead(request_id=receipt.request_id, pet_key=receipt.pet_key)
+
+    async def _bond(self, player_id: int) -> SpiritPetBond | None:
+        return await self.session.scalar(select(SpiritPetBond).where(SpiritPetBond.player_id == player_id))
+
+    async def _pet_receipt(self, player_id: int, request_id) -> SpiritPetReceipt | None:
+        return await self.session.scalar(select(SpiritPetReceipt).where(
+            SpiritPetReceipt.player_id == player_id,
+            SpiritPetReceipt.request_id == str(request_id),
+        ))
+
     async def _apply_progress(self, player: Player) -> None:
         now = datetime.now(timezone.utc)
+        bond = await self._bond(player.id)
+        factor, flat = self._pet_cultivation(bond)
+        _, partner_factor, partner_flat = partner_stack(self.rules, await self._active_partner_count(player.id))
         progress = self.cultivation_engine.apply_offline_progress(CultivationInput(
             cultivation_exp=player.cultivation_exp, last_cultivation_at=player.last_cultivation_at,
             current_time=now, base_rate_per_minute=self._base_rate_per_minute(player),
             root_modifier=player.spiritual_root.cultivation_modifier,
+            pet_factor=factor, pet_flat_per_minute=flat,
+            partner_factor=partner_factor, partner_flat_per_minute=partner_flat,
         ))
         player.cultivation_exp = progress.cultivation_exp
         # Preserve fractional seconds and never move a future timestamp backwards.
@@ -296,17 +537,27 @@ class GameStateService:
         equipment = [EquippedRead(slot=row.slot, item_key=row.item_key) for row in await self.equipment.list(player.id)]
         equipped_keys = {row.item_key for row in equipment}
         equipment_bonus = sum(item.combat_bonus for item in inventory if item.key in equipped_keys and item.quantity > 0)
+        bond = await self._bond(player.id)
+        pet_bonus = self.pet_combat_bonus(bond)
+        spirit_pet = self._spirit_pet(bond)
         preview = await self._preview(player)
         base = self._base_rate_per_minute(player)
-        rate = base * player.spiritual_root.cultivation_modifier
+        root_rate = base * player.spiritual_root.cultivation_modifier
+        factor, flat = self._pet_cultivation(bond)
+        partners = await self._partner_roster(player.id)
+        active_partners = [partner for partner in partners if partner.active]
+        partner_bonus, partner_factor, partner_flat = partner_stack(self.rules, len(active_partners))
+        rate = root_rate * factor * partner_factor + flat + partner_flat
         report = await self.logs.pending_offline()
         return GameStateRead(
             rules_version=self.rules.rules_version,
             rules_fingerprint=self.rules.fingerprint,
             player=PlayerRead(
                 id=player.id, name=player.name, spirit_stones=player.spirit_stones,
-                qi_gathering_pills=pills, combat_power=player.combat_power + equipment_bonus,
+                qi_gathering_pills=pills,
+                combat_power=player.combat_power + equipment_bonus + pet_bonus + partner_bonus,
                 base_combat_power=player.combat_power, equipment_bonus=equipment_bonus,
+                pet_bonus=pet_bonus, partner_bonus=partner_bonus,
                 manual_key=player.manual_key, current_activity=player.current_activity,
             ),
             inventory=inventory,
@@ -315,11 +566,16 @@ class GameStateService:
             spiritual_root=SpiritualRootRead.model_validate(player.spiritual_root, from_attributes=True),
             cultivation=CultivationRead(
                 current_exp=player.cultivation_exp, required_exp=preview.required_exp,
-                rate_per_minute=rate, base_rate_per_minute=base, root_bonus_per_minute=rate-base,
+                rate_per_minute=rate, base_rate_per_minute=base, root_bonus_per_minute=root_rate - base,
+                pet_factor=factor, pet_flat_per_minute=flat,
+                partner_factor=partner_factor, partner_flat_per_minute=partner_flat,
                 seconds_until_next_stage=self.cultivation_engine.seconds_until_next_stage(player.cultivation_exp, preview.required_exp, rate),
                 last_cultivation_at=player.last_cultivation_at,
             ),
-            active_pet=None, dao_partner=None,
+            active_pet=spirit_pet.name if spirit_pet is not None and spirit_pet.active else None,
+            spirit_pet=spirit_pet,
+            dao_partner=", ".join(partner.name for partner in active_partners) or None,
+            dao_partners=partners,
             recent_logs=[GameLogRead.model_validate(log, from_attributes=True) for log in await self.logs.recent()],
             server_time=_server_now(), breakthrough=preview,
             offline_report=OfflineRead(id=report.id, **report.log_metadata) if report else None,

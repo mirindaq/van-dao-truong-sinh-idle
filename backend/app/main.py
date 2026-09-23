@@ -3,10 +3,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from app.api.routes.alchemy import router as alchemy_router
 from app.api.routes.breakthrough import router as breakthrough_router
 from app.api.routes.equipment import router as equipment_router
 from app.api.routes.exploration import router as exploration_router
 from app.api.routes.world import router as world_router
+from app.api.routes.partners import router as partners_router
+from app.api.routes.pets import router as pets_router
 from app.api.routes.relationships import router as relationships_router
 from app.core.game_rules import game_rules
 from app.core.game_rule_registry import register_game_rules
@@ -47,6 +50,9 @@ def create_app() -> FastAPI:
     app.include_router(exploration_router, prefix="/exploration", tags=["exploration"])
     app.include_router(world_router, prefix="/world", tags=["world"])
     app.include_router(relationships_router, prefix="/relationships", tags=["relationships"])
+    app.include_router(pets_router, prefix="/pets", tags=["pets"])
+    app.include_router(alchemy_router, prefix="/alchemy", tags=["alchemy"])
+    app.include_router(partners_router, prefix="/partners", tags=["partners"])
 
     @app.exception_handler(GameError)
     async def game_error_handler(request, exc: GameError):

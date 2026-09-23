@@ -52,7 +52,7 @@ async def test_existing_schema_upgrades_and_redeploy_is_idempotent():
         engine = create_async_engine(settings.database_url, connect_args={"server_settings": {"search_path": schema}})
         async with engine.begin() as connection:
             await connection.run_sync(upgrade, "head")
-            assert (await connection.execute(text("SELECT version_num FROM alembic_version"))).scalar() == "20260922_0010"
+            assert (await connection.execute(text("SELECT version_num FROM alembic_version"))).scalar() == "20260923_0013"
             assert (await connection.execute(text("SELECT total_ticks FROM world_states"))).scalar() == 18
             assert (await connection.execute(text("SELECT rules_fingerprint FROM world_states"))).scalar() != "legacy"
             assert (await connection.execute(text("SELECT count(*) FROM world_npcs"))).scalar() == 3

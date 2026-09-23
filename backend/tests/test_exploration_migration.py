@@ -53,7 +53,7 @@ async def test_completed_run_survives_journey_migration_and_second_upgrade():
                 VALUES ((SELECT id FROM players),'legacy-run','qingyun_mountain','victory','đã xong',true,10,1,'[]','{}',1,'legacy')"""))
             await connection.run_sync(upgrade, "head")
             await connection.run_sync(upgrade, "head")
-            assert (await connection.execute(text("SELECT version_num FROM alembic_version"))).scalar() == "20260922_0010"
+            assert (await connection.execute(text("SELECT version_num FROM alembic_version"))).scalar() == "20260923_0013"
             row = (await connection.execute(text("SELECT state, reward_item_quantity, available_at FROM exploration_runs"))).one()
             assert row.state == "victory" and row.reward_item_quantity == 0 and row.available_at is None
     finally:

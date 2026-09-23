@@ -1,4 +1,4 @@
-import type { BreakthroughPreview, BreakthroughRequest, BreakthroughResult, GameState, EquipmentSlot, ExplorationResponse, InteractionRequest, InteractionResponse, RelationshipProfile, WorldEventPage, WorldState } from "@/lib/types";
+import type { AlchemyRecipe, BreakthroughPreview, BreakthroughRequest, BreakthroughResult, DaoPartner, GameState, EquipmentSlot, ExplorationResponse, InteractionRequest, InteractionResponse, PetSpecies, RelationshipProfile, WorldEventPage, WorldState } from "@/lib/types";
 
 const messages: Record<string, string> = {
   no_save: "Tiên lộ của bạn chưa bắt đầu.",
@@ -21,6 +21,16 @@ const messages: Record<string, string> = {
   interaction_request_conflict: "Lượt trò chuyện này đã được gửi với lời đáp khác.",
   prompt_conflict: "Tình huống đã thay đổi. Hãy mở lại cuộc trò chuyện.",
   invalid_choice: "Lời đáp này không còn khả dụng.",
+  unknown_pet: "Linh thú này chưa có trong ba loài.",
+  pet_request_conflict: "Lần kết khế ước này đã được gửi với loài khác.",
+  pet_already_bonded: "Save này đã có một linh thú.",
+  no_pet: "Chưa có linh thú để gọi.",
+  unknown_recipe: "Công thức này chưa mở.",
+  alchemy_request_conflict: "Lần luyện này đã được gửi với số lượng khác.",
+  insufficient_herbs: "Vân Linh Thảo chưa đủ để luyện.",
+  partner_not_ready: "Cần ít nhất 8 thiện cảm để kết làm đạo lữ.",
+  partner_not_bonded: "Vị này chưa phải đạo lữ của bạn.",
+  unknown_partner: "Không tìm thấy vị đạo hữu này.",
 };
 
 export class GameApiError extends Error {
@@ -49,6 +59,15 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
 }
 
 export const gameApi = {
+  partners: () => request<{ partners: DaoPartner[] }>("/partners"),
+  bondPartner: (npc_key: string) => request<GameState>("/partners/bond", { npc_key }),
+  dismissPartner: (npc_key: string) => request<GameState>("/partners/dismiss", { npc_key }),
+  alchemy: () => request<{ recipes: AlchemyRecipe[]; herb_quantity: number; pill_quantity: number }>("/alchemy"),
+  craft: (request_id: string, recipe_key: string, ingredient_quantity: number) => request<{ state: GameState; receipt: { request_id: string; recipe_key: string; ingredient_quantity: number; result_quantity: number } }>("/alchemy/craft", { request_id, recipe_key, ingredient_quantity }),
+  pets: () => request<{ species: PetSpecies[]; spirit_pet: GameState["spirit_pet"] }>("/pets"),
+  bondPet: (request_id: string, pet_key: string) => request<{ state: GameState; receipt: { request_id: string; pet_key: string } }>("/pets/bond", { request_id, pet_key }),
+  restPet: () => request<GameState>("/pets/rest", {}),
+  recallPet: () => request<GameState>("/pets/recall", {}),
   claimEquipment: () => request<GameState>("/equipment/claim", {}),
   equip: (slot: EquipmentSlot, item_key: string | null) => request<GameState>("/equipment/slot", { slot, item_key }),
   explore: (request_id: string, location_key = "qingyun_mountain") => request<ExplorationResponse>("/exploration/run", { request_id, location_key }),

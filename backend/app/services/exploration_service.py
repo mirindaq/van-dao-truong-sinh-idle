@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.game_rules import GameRules, game_rules
 from app.game.battle import BattleEngine, Combatant
 from app.game.data.journeys import journey_definitions
+from app.game.data.partners import partner_stack
 from app.game.random_service import RandomService
 from app.game.data.items import PILL_KEY
 from app.models.exploration import ExplorationRun
@@ -120,7 +121,10 @@ class ExplorationService:
                 item = await self.session.get(Item, equipped_item.item_key)
                 if item is not None:
                     equipment_bonus += item.combat_bonus
-            power = player.combat_power + equipment_bonus
+            bond = await self.game._bond(player.id)
+            partners = await self.game._active_partner_count(player.id)
+            partner_bonus, _, _ = partner_stack(self.rules, partners)
+            power = player.combat_power + equipment_bonus + self.game.pet_combat_bonus(bond) + partner_bonus
             player_combatant = Combatant(
                 player.name,
                 self.rules.battle_player_hp_base + power,

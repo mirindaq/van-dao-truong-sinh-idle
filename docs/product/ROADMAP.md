@@ -14,38 +14,27 @@ before broader xianxia systems are added.
 | phase-5-game-configuration | scopes/phase-5-game-configuration.md | closed 2026-09-21 |
 | phase-6-npc-relationships | scopes/phase-6-npc-relationships.md | closed 2026-09-22 |
 | phase-7-world-journeys | scopes/phase-7-world-journeys.md | closed 2026-09-22 |
-| phase-8-spirit-pets | scopes/phase-8-spirit-pets.md | open |
-| phase-9-alchemy | scopes/phase-9-alchemy.md | not started |
+| phase-8-spirit-pets | scopes/phase-8-spirit-pets.md | closed 2026-09-23 |
+| phase-9-alchemy | scopes/phase-9-alchemy.md | closed 2026-09-23 |
+| phase-10-partner-craft | scopes/phase-10-partner-craft.md | open |
 
-## phase-8-spirit-pets
+## phase-10-partner-craft
 
-Outcome: the player can obtain, keep and activate one spirit pet whose saved
-bonus is visible in the relevant game calculation.
+Outcome: the player can keep every reached dao partner, see their stacked
+bonus, and craft a second recipe without duplicating items.
 
-Risk retired: companions can affect gameplay without duplicating equipment or
-corrupting player progression.
+Risk retired: several partners can affect play, and a second recipe can exist,
+without granting items twice or rewriting old receipts.
 
-Not yet: breeding and pet combat are deferred; alchemy lands in
-`phase-9-alchemy`.
+Not yet: gifts, quests, pet breeding and NPC trade stay unplaced.
 
-Human decisions: first pets, acquisition rules and bonus boundary.
+Human decisions: who can be the partner, what the bonus touches, and the
+second recipe. Settled 2026-09-23: any number of the three NPCs, both combat
+and cultivation, and a 6-herb batch.
 
-Evidence: acquisition is idempotent; one active pet persists across restart;
-its bonus is applied exactly once and removed when deactivated.
-
-## phase-9-alchemy
-
-Outcome: the player can spend saved materials on a recipe and receive a
-persisted consumable through a retry-safe crafting action.
-
-Risk retired: resource sinks and crafting work without item duplication.
-
-Not yet: player trading and NPC economy require a later roadmap decision.
-
-Human decisions: first recipes, costs, results and crafting duration.
-
-Evidence: crafting commits ingredients and output atomically; replay returns
-the same receipt; reload and redeploy preserve inventory and craft history.
+Evidence: each partner persists across restart and that person's bonus is
+removed when the bond ends; the batch recipe commits its own cost and output
+once per request.
 
 ## Dropped
 

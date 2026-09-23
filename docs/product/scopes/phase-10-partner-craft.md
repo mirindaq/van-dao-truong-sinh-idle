@@ -1,0 +1,96 @@
+# phase-10-partner-craft — Nhiều đạo lữ và mẻ thứ hai
+
+Milestone from ROADMAP.md; rules from PRODUCT.md.
+Outcome: Người chơi kết mọi đạo lữ đã đủ thân, thấy bonus cộng dồn, và luyện
+mẻ 6 thảo ra 2 đan. Gỡ một người thì chỉ mất bonus của người đó.
+
+## Open decisions
+- **Settled 2026-09-23 (walk) — ai thành đạo lữ:** không giới hạn số người.
+  Lạc Thanh Hàn, Tạ Vô Trần và vị tán tu, ai đạt thân mật 8 cũng kết được.
+  Cả ba có thể đang kết cùng lúc.
+- **Settled 2026-09-23 (walk) — bonus đạo lữ:** mỗi người đang kết cộng cả
+  chiến lực lẫn tốc độ tu vi. Các người đang kết cộng dồn. Gỡ một người thì
+  bỏ đúng phần người đó. Không đụng đột phá.
+- **Settled 2026-09-23 (walk) — công thức thứ hai:** 6 Vân Linh Thảo ra 2
+  Tụ Khí Đan, key `recipe/qi_pill_batch`. Công thức 3 ra 1 vẫn còn.
+
+## The flow
+1. Người chơi chọn lời đáp ấm với một NPC. Thân mật của người đó tới ít nhất 8.
+2. Người chơi mở Đạo Lữ, thấy ai đã đủ 8 và nút kết. Kết một người. Chiến lực
+   tăng đúng khoản của một người. Tốc độ tu vi nhân hệ số người đó rồi cộng
+   lượng của người đó, trên công thức linh thú hiện có.
+3. Người chơi kết thêm người khác đã đủ 8. Bonus cộng thêm đúng một suất nữa.
+   Hai tab kết cùng một người vẫn một đạo lữ.
+4. Người chơi gỡ một người. Chỉ mất suất của người đó. Người còn lại giữ bonus.
+5. Người chơi mở Luyện Đan, thấy mẻ 3 ra 1 và mẻ 6 ra 2. Đủ 6 thảo thì luyện
+   mẻ 6: trừ 6, cộng 2, một biên nhận. Cùng mã không luyện lần hai.
+6. Reload, restart hoặc redeploy: danh sách đạo lữ, bonus và túi khớp lần ghi.
+
+## Entities
+- **Đạo lữ:** một save, một NPC, đang kết hay đã gỡ. Identity: save + NPC.
+  Ba key: `luo_qinghan`, `xie_wuchen`, `wandering_cultivator`.
+- **Suất bonus:** mỗi người đang kết có khoản chiến lực, hệ số tu vi và lượng
+  mỗi phút. Bản khởi đầu mỗi người: +3 chiến lực, ×1.05, +0.1 tu vi mỗi phút.
+- **Công thức:** `recipe/qi_pill` là 3 ra 1. `recipe/qi_pill_batch` là 6 ra 2.
+- **Biên nhận luyện:** một mã yêu cầu cho một save, trỏ đúng một công thức.
+
+## States
+```mermaid
+stateDiagram-v2
+    [*] --> ChuaKet
+    ChuaKet --> DangKet: đủ thân mật 8 và người chơi kết
+    DangKet --> DaGo: người chơi gỡ người này
+    DaGo --> DangKet: người chơi kết lại
+```
+- Mỗi NPC một trạng thái. PostgreSQL giữ từng đạo lữ và từng biên nhận.
+- Tốc độ = gốc × linh căn × hệ số linh thú × hệ số của mọi đạo lữ đang kết
+  + lượng linh thú + tổng lượng các đạo lữ đang kết. Không có đạo lữ thì hệ số
+  đạo lữ bằng 1 và lượng đạo lữ bằng 0.
+- Chiến lực cộng thêm tổng khoản của những người đang kết.
+
+## Saved for real
+- Từng đạo lữ sống qua reload, restart và redeploy. Save cũ không tự kết.
+- Gỡ một người không gỡ người khác và không rút tu vi đã chốt.
+- Biên nhận mẻ 6 không viết lại biên nhận mẻ 3.
+- Đổi cấu hình không viết lại đạo lữ hay biên nhận đã ghi. Số đang hiện dùng
+  cấu hình hiện tại.
+
+## Resilience
+| Case | Decided behaviour |
+|---|---|
+| Kết khi thân mật dưới 8 | Từ chối; người đó không thành đạo lữ. |
+| Kết lại người đang kết | Vẫn một dòng; bonus không nhân đôi. |
+| Gỡ người chưa kết | Từ chối. |
+| Hai tab kết cùng một người | Một đạo lữ. |
+| Kết người thứ hai | Cộng thêm đúng một suất. Người đầu vẫn còn. |
+| Gỡ một người | Mất đúng suất đó. Người kia giữ nguyên. |
+| Luyện mẻ 6 khi thảo ít hơn 6 | Từ chối; túi không đổi. |
+| Cùng mã mẻ 6 | Trừ 6 và cộng 2 đúng một lần. |
+| Mẻ 3 và mẻ 6 | Hai biên nhận khác nhau. |
+
+## Deferred
+- Quà, quest, thú chiến đấu và đạo lữ ngoài ba NPC hiện có → chưa có milestone sau phase-10.
+- Mua bán với NPC, luyện hỏng và luyện theo giờ → vẫn chưa có milestone.
+
+## Evidence
+Automated:
+- [ ] E-1: Dưới 8 thì không kết. Đủ 8 thì kết được từng người trong ba NPC.
+- [ ] E-2: Một người đang kết thì chiến lực cộng đúng một suất và tốc độ gồm đúng một hệ số, một lượng.
+- [ ] E-3: Hai người đang kết thì cộng hai suất. Gỡ một người thì còn đúng một suất.
+- [ ] E-4: Không có đạo lữ thì tốc độ trở về công thức linh thú. Đột phá không đổi.
+- [ ] E-5: Đọc được mẻ 6 ra 2. Đủ thảo thì trừ 6 cộng 2 một lần.
+- [ ] E-6: Cùng mã mẻ 6 không luyện lần hai. Thiếu thảo thì túi không đổi. Mẻ 3 vẫn chạy.
+- [ ] E-7: Reload và redeploy giữ đạo lữ và túi. Migration không tự kết, không tự luyện.
+- [ ] E-8: Regression, migration, lint, typecheck và build đều qua.
+
+Manual, at close:
+- [ ] E-9: Kết một người, thấy tên và cả dòng chiến lực lẫn tốc độ. Kết thêm người thứ hai, bonus tăng.
+- [ ] E-10: Gỡ một người, reload: chỉ mất suất người đó.
+- [ ] E-11: Luyện mẻ 6. Desktop, mobile, 320px và bàn phím đọc được đạo lữ, giá và kết quả.
+
+## Clarifications
+- 2026-09-23 round 1 — asked: ai thành đạo lữ, bonus, công thức thứ hai —
+  answered: bao nhiêu đạo lữ cũng được; cả chiến lực và tốc độ tu vi; 6 thảo
+  ra 2 đan — raised: cộng dồn theo từng người, ngưỡng thân mật 8 giữ nguyên.
+
+## Closed

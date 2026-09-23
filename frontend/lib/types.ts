@@ -9,6 +9,8 @@ export type GameState = {
     combat_power: number;
     base_combat_power: number;
     equipment_bonus: number;
+    pet_bonus: number;
+    partner_bonus: number;
     manual_key: string;
     current_activity: string;
   };
@@ -34,9 +36,15 @@ export type GameState = {
     last_cultivation_at: string;
     base_rate_per_minute: number;
     root_bonus_per_minute: number;
+    pet_factor: number;
+    pet_flat_per_minute: number;
+    partner_factor: number;
+    partner_flat_per_minute: number;
   };
   active_pet: string | null;
+  spirit_pet: { key: string; name: string; active: boolean } | null;
   dao_partner: string | null;
+  dao_partners: DaoPartner[];
   recent_logs: Array<{
     id: number;
     scope: string;
@@ -54,7 +62,19 @@ export type GameState = {
   equipment_pack_claimed: boolean;
 };
 
+export type DaoPartner = {
+  npc_key: string; name: string; affinity: number; active: boolean;
+};
+
 export type EquipmentSlot = "weapon" | "head" | "body" | "feet" | "ring" | "amulet";
+export type AlchemyRecipe = {
+  key: string; name: string; ingredient_key: string; ingredient_name: string;
+  ingredient_quantity: number; result_key: string; result_name: string; result_quantity: number;
+};
+export type PetSpecies = {
+  key: string; name: string; asset_key: string; combat_bonus: number;
+  cultivation_factor: number; cultivation_flat_per_minute: number;
+};
 export type Exploration = {
   id: number; request_id: string; location_key: string; state: "resolving" | "traveling" | "victory" | "defeat" | "empty";
   message: string; victory: boolean | null; reward_stones: number; reward_pills: number;

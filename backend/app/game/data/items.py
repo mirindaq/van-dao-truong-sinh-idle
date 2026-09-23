@@ -12,7 +12,7 @@ def item_definitions(rules: GameRules = game_rules) -> list[dict]:
         dict(key=MANUAL_KEY, name="Thanh Mộc Quyết", category="manual", asset_key=MANUAL_KEY,
              description="Công pháp tìm thấy trong động phủ. Vật phẩm sở hữu, không tiêu hao; chưa có hiệu ứng cộng thêm."),
         dict(key=HERB_KEY, name="Vân Linh Thảo", category="material", asset_key=HERB_KEY,
-             description=f"Nguyên liệu Hậu Sơn. Mỗi hành trình thắng nhận {rules.journey_material_quantity} phần; chưa dùng để luyện đan."),
+             description=f"Nguyên liệu Hậu Sơn. Mỗi hành trình thắng nhận {rules.journey_material_quantity} phần. Ba phần luyện thành một Tụ Khí Đan."),
     ]
 
 

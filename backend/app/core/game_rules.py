@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -23,6 +24,35 @@ class NpcRule(BaseModel):
     stage: int = Field(gt=0)
     cultivation_exp: float = Field(ge=0)
     cultivation_rate: float = Field(gt=0)
+
+
+class PetRule(BaseModel):
+    combat_bonus: int
+    cultivation_factor: float
+    cultivation_flat_per_minute: float
+
+    @model_validator(mode="after")
+    def bonus_is_a_real_change(self) -> "PetRule":
+        flat = self.cultivation_flat_per_minute
+        factor = self.cultivation_factor
+        if self.combat_bonus <= 0 or flat <= 0 or factor <= 0 or factor == 1:
+            raise ValueError(
+                "GAME_PET_RULES combat bonus and cultivation flat must be above 0, and cultivation factor must not be 1"
+            )
+        return self
+
+
+class AlchemyRecipe(BaseModel):
+    ingredient_key: str
+    ingredient_quantity: int
+    result_key: str
+    result_quantity: int
+
+    @model_validator(mode="after")
+    def quantities_change_the_bag(self) -> "AlchemyRecipe":
+        if self.ingredient_quantity <= 0 or self.result_quantity <= 0:
+            raise ValueError("GAME_ALCHEMY_RECIPES quantities must be above 0")
+        return self
 
 
 class GameRules(BaseSettings):
@@ -91,6 +121,12 @@ class GameRules(BaseSettings):
     realm_rules: dict[str, RealmRule]
     root_rules: dict[str, RootRule]
     equipment_bonuses: dict[str, int]
+    pet_rules: dict[str, PetRule]
+    alchemy_recipes: dict[str, AlchemyRecipe]
+    dao_partner_affinity: int = Field(gt=0)
+    dao_partner_combat: int = Field(gt=0)
+    dao_partner_factor: float = Field(gt=0)
+    dao_partner_flat: float = Field(gt=0)
     npc_rules: dict[str, NpcRule]
 
     model_config = SettingsConfigDict(
@@ -144,6 +180,24 @@ class GameRules(BaseSettings):
             raise ValueError("GAME_EQUIPMENT_BONUSES must define every equipment item")
         if self.equipment_bonuses["items/spirit_vein_sword"] <= self.equipment_bonuses["items/bamboo_sword"]:
             raise ValueError("GAME_EQUIPMENT_BONUSES items/spirit_vein_sword must exceed items/bamboo_sword")
+        required_pets = {"thanh_xa", "hoa_ho", "van_tuoc"}
+        if set(self.pet_rules) != required_pets:
+            raise ValueError("GAME_PET_RULES must define thanh_xa, hoa_ho and van_tuoc")
+        snake, fox, bird = self.pet_rules["thanh_xa"], self.pet_rules["hoa_ho"], self.pet_rules["van_tuoc"]
+        if not snake.combat_bonus > fox.combat_bonus > bird.combat_bonus:
+            raise ValueError("GAME_PET_RULES combat bonuses must rank thanh_xa above hoa_ho above van_tuoc")
+        if not bird.cultivation_factor > fox.cultivation_factor > snake.cultivation_factor:
+            raise ValueError("GAME_PET_RULES cultivation factors must rank van_tuoc above hoa_ho above thanh_xa")
+        if not bird.cultivation_flat_per_minute > fox.cultivation_flat_per_minute > snake.cultivation_flat_per_minute:
+            raise ValueError("GAME_PET_RULES cultivation flats must rank van_tuoc above hoa_ho above thanh_xa")
+        required_recipes = {"recipe/qi_pill", "recipe/qi_pill_batch"}
+        if set(self.alchemy_recipes) != required_recipes:
+            raise ValueError("GAME_ALCHEMY_RECIPES must define recipe/qi_pill and recipe/qi_pill_batch")
+        for recipe in self.alchemy_recipes.values():
+            if recipe.ingredient_key != "items/cloud_mist_herb" or recipe.result_key != "items/qi_gathering_pill":
+                raise ValueError("GAME_ALCHEMY_RECIPES must spend cloud mist herb and produce a qi gathering pill")
+        if self.dao_partner_factor == 1:
+            raise ValueError("GAME_DAO_PARTNER_FACTOR must not be 1")
         required_realms = {"mortal", "qi_refining", "foundation_establishment", "golden_core", "nascent_soul", "soul_formation", "void_refinement", "body_integration", "mahayana", "tribulation", "human_immortal"}
         if set(self.realm_rules) != required_realms:
             raise ValueError("GAME_REALM_RULES must define the complete realm ladder")
@@ -170,7 +224,10 @@ class GameRules(BaseSettings):
 
 @lru_cache
 def get_game_rules() -> GameRules:
-    return GameRules()
+    env_file = Path(".env")
+    if not env_file.is_file():
+        env_file = Path(__file__).resolve().parents[2] / ".env.example"
+    return GameRules(_env_file=env_file)
 
 
 game_rules = get_game_rules()

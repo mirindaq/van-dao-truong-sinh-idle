@@ -11,6 +11,10 @@ class CultivationInput:
     current_time: datetime
     base_rate_per_minute: float
     root_modifier: float
+    pet_factor: float = 1
+    pet_flat_per_minute: float = 0
+    partner_factor: float = 1
+    partner_flat_per_minute: float = 0
 
 
 @dataclass(frozen=True)
@@ -24,7 +28,11 @@ class CultivationResult:
 class CultivationEngine:
     def apply_offline_progress(self, data: CultivationInput) -> CultivationResult:
         elapsed_seconds = max(int((data.current_time - data.last_cultivation_at).total_seconds()), 0)
-        rate_per_minute = data.base_rate_per_minute * data.root_modifier
+        rate_per_minute = (
+            data.base_rate_per_minute * data.root_modifier * data.pet_factor * data.partner_factor
+            + data.pet_flat_per_minute
+            + data.partner_flat_per_minute
+        )
         earned_exp = (elapsed_seconds / 60) * rate_per_minute
 
         return CultivationResult(

@@ -21,7 +21,7 @@ export const destinations = [
   { id: "world", name: "Thiên Hạ", icon: Globe2 },
   { id: "journal", name: "Nhật Ký", icon: ScrollText },
 ];
-const ready = new Set(["home", "cultivation", "character", "skills", "equipment", "inventory", "exploration", "world", "journal"]);
+const ready = new Set(["home", "cultivation", "character", "skills", "equipment", "inventory", "exploration", "world", "journal", "pets", "alchemy", "partner"]);
 const mobileMain = ["home", "cultivation", "exploration", "character"];
 
 export function GameShell({ state, view, navigate, children, refreshing, disconnected, onRefresh, onSettings }: {

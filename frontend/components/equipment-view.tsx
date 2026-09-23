@@ -14,7 +14,7 @@ export function EquipmentView({ state, navigate, onEquip, disabled }: {
 }) {
   return <section className="collection-page">
     <div className="page-heading"><div><p className="eyebrow">PHÁP BẢO · HỘ THÂN</p><h1>Trang Bị</h1></div><span>{state.equipment.length} / 6 ô đang mặc</span></div>
-    <div className="equipment-summary"><StatRow label="Chiến lực nền" value={number(state.player.base_combat_power)} /><StatRow label="Từ trang bị" value={`+${number(state.player.equipment_bonus)}`} /><StatRow label="Tổng chiến lực" value={number(state.player.combat_power)} accent /></div>
+    <div className="equipment-summary"><StatRow label="Chiến lực nền" value={number(state.player.base_combat_power)} /><StatRow label="Từ trang bị" value={`+${number(state.player.equipment_bonus)}`} /><StatRow label="Từ linh thú" value={`+${number(state.player.pet_bonus)}`} /><StatRow label="Từ đạo lữ" value={`+${number(state.player.partner_bonus)}`} /><StatRow label="Tổng chiến lực" value={number(state.player.combat_power)} accent /></div>
     <p className="muted">Trang bị cộng chiến lực. Mặc và tháo không tiêu hao vật phẩm.</p>
     <div className="equipment-grid">{slots.map(([slot, label]) => {
       const current = state.equipment.find(e => e.slot === slot);

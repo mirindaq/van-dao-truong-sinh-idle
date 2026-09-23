@@ -29,6 +29,10 @@ class CultivationRead(BaseModel):
     last_cultivation_at: datetime
     base_rate_per_minute: float
     root_bonus_per_minute: float
+    pet_factor: float = 1
+    pet_flat_per_minute: float = 0
+    partner_factor: float = 1
+    partner_flat_per_minute: float = 0
 
 
 class OfflineRead(BaseModel):
@@ -96,6 +100,8 @@ class PlayerRead(BaseModel):
     combat_power: int
     base_combat_power: int
     equipment_bonus: int
+    pet_bonus: int = 0
+    partner_bonus: int = 0
     manual_key: str
     current_activity: str
 
@@ -131,6 +137,43 @@ class EquippedRead(BaseModel):
     item_key: str
 
 
+class SpiritPetRead(BaseModel):
+    key: str
+    name: str
+    active: bool
+
+
+class PetSpeciesRead(BaseModel):
+    key: str
+    name: str
+    asset_key: str
+    combat_bonus: int
+    cultivation_factor: float
+    cultivation_flat_per_minute: float
+
+
+class PetCatalogRead(BaseModel):
+    species: list[PetSpeciesRead]
+    spirit_pet: SpiritPetRead | None
+
+
+class PetBondRequest(BaseModel):
+    request_id: UUID
+    pet_key: str = Field(min_length=1, max_length=80)
+
+
+class PetReceiptRead(BaseModel):
+    request_id: UUID
+    pet_key: str
+
+
+class DaoPartnerRead(BaseModel):
+    npc_key: str
+    name: str
+    affinity: int
+    active: bool
+
+
 class GameStateRead(BaseModel):
     rules_version: int
     rules_fingerprint: str
@@ -139,7 +182,9 @@ class GameStateRead(BaseModel):
     spiritual_root: SpiritualRootRead
     cultivation: CultivationRead
     active_pet: str | None
+    spirit_pet: SpiritPetRead | None = None
     dao_partner: str | None
+    dao_partners: list[DaoPartnerRead] = []
     recent_logs: list[GameLogRead]
     server_time: datetime
     offline_report: OfflineRead | None
@@ -147,3 +192,53 @@ class GameStateRead(BaseModel):
     inventory: list[InventoryRead]
     equipment: list[EquippedRead]
     equipment_pack_claimed: bool
+
+
+class PetBondResponse(BaseModel):
+    state: GameStateRead
+    receipt: PetReceiptRead
+
+
+class AlchemyRecipeRead(BaseModel):
+    key: str
+    name: str
+    ingredient_key: str
+    ingredient_name: str
+    ingredient_quantity: int
+    result_key: str
+    result_name: str
+    result_quantity: int
+
+
+class AlchemyCatalogRead(BaseModel):
+    recipes: list[AlchemyRecipeRead]
+    herb_quantity: int
+    pill_quantity: int
+
+
+class CraftRequest(BaseModel):
+    request_id: UUID
+    recipe_key: str = Field(min_length=1, max_length=80)
+    ingredient_quantity: int = Field(gt=0)
+
+
+class CraftReceiptRead(BaseModel):
+    request_id: UUID
+    recipe_key: str
+    ingredient_key: str
+    ingredient_quantity: int
+    result_key: str
+    result_quantity: int
+
+
+class CraftResponse(BaseModel):
+    state: GameStateRead
+    receipt: CraftReceiptRead
+
+
+class PartnerRosterRead(BaseModel):
+    partners: list[DaoPartnerRead]
+
+
+class PartnerRequest(BaseModel):
+    npc_key: str = Field(min_length=1, max_length=80)

@@ -87,7 +87,7 @@ test("mobile navigation, locked content, assets and no horizontal overflow", asy
   await page.getByRole("button", { name: "Thêm", exact: true }).click();
   await page.getByRole("dialog").getByRole("link", { name: "Linh Thú", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Linh Thú", exact: true })).toBeVisible();
-  await expect(page.getByText("Bạn chưa ký khế ước với bất kỳ linh thú nào.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Thanh Xà" })).toBeVisible();
   await page.getByRole("navigation", { name: "Điều hướng chính" }).getByRole("link", { name: "Động Phủ", exact: true }).click();
   for (const width of [320, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });

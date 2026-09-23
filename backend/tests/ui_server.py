@@ -71,6 +71,10 @@ async def prepare(mode: str):
                 pill.quantity = 0
             if mode == "offline":
                 player.last_cultivation_at = datetime.now(timezone.utc) - timedelta(hours=8)
+            if mode == "herbs":
+                from app.game.data.items import HERB_KEY
+                from app.models.item import OwnedItem
+                session.add(OwnedItem(player_id=player.id, item_key=HERB_KEY, quantity=3))
             await session.commit()
             if mode == "world-offline":
                 await WorldService(session).get_state()

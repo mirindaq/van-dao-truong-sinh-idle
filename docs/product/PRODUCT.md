@@ -34,8 +34,12 @@ the world feel alive without click-heavy play.
 - World state: one per save, with a deterministic seed, rules version and the
   last processed 10-minute tick. World events and unread return reports derive
   from its committed ticks.
-- Pet and alchemy objects remain planned. NPC relationships, pending
+- Spirit pet: one bond per save, chosen from Thanh Xà, Hỏa Hồ or Vân Tước.
+  While active it adds its own combat-power amount and changes cultivation
+  speed. NPC relationships, pending
   prompts and interaction receipts are saved per save.
+- Dao partner: one saved row per save and NPC. Any of the three existing NPCs
+  at affinity 8 may be active at once; dismissing one preserves every other row.
 
 ## Source Of Truth
 
@@ -66,6 +70,14 @@ the world feel alive without click-heavy play.
 - PostgreSQL decides each NPC relationship, pending conversation and immutable
   interaction receipt. Browser storage only preserves a request payload for
   retry; browser time never opens a conversation turn.
+- PostgreSQL decides the one spirit pet bond and whether it is active.
+  The typed rules object decides each species' combat amount, cultivation
+  factor and flat per minute. The frontend only displays them.
+- PostgreSQL decides each alchemy receipt and the inventory quantities it
+  changes. The typed rules object decides that the two recipes spend 3 herbs
+  for 1 pill or 6 herbs for 2 pills. The frontend only displays the recipes.
+- PostgreSQL decides each dao-partner row, keyed by save and NPC. The typed
+  rules object decides the affinity threshold and each active partner's bonus.
 
 ## Product Rules
 
@@ -109,9 +121,25 @@ the world feel alive without click-heavy play.
   Configuration is typed and validated at startup; changes require restart and
   a new rules version. Display copy, stable keys and asset paths are content,
   not gameplay parameters.
-- NPC affinity changes dialogue, forms of address and NPC news only. It never
-  grants player resources, power, buffs, quests or relationship rewards in the
-  current milestone.
+- NPC affinity changes dialogue, forms of address and NPC news. Reaching 8 only
+  permits the player to form a dao-partner bond; affinity itself grants no bonus.
+- An active spirit pet adds its combat amount once, separate from equipment.
+  Cultivation per minute is base × root × that pet's factor, plus that pet's
+  flat amount, each part once. Resting or having no pet uses factor 1 and flat
+  0. Turning the pet on or off settles cultivation first and does not remove
+  settled cultivation. It does not change breakthrough chance, inventory,
+  equipment slots or NPC affinity.
+- Crafting one Tụ Khí Đan spends 3 Vân Linh Thảo and grants 1 pill in the same
+  saved write, immediately. The same request returns that receipt and does not
+  craft again. Fewer than 3 herbs changes nothing. Crafting does not change
+  combat power, cultivation speed, equipment or the spirit pet.
+- The batch recipe `recipe/qi_pill_batch` spends 6 Vân Linh Thảo and grants 2
+  Tụ Khí Đan in one saved write. The 3-for-1 recipe remains available, and each
+  request id commits at most one recipe once.
+- Each active dao partner adds +3 combat power, multiplies cultivation by 1.05
+  and adds 0.1 cultivation per minute. Bonuses stack per active partner; no
+  partner uses factor 1 and flat 0. Dismissing one removes only that share and
+  never changes breakthrough chance or already settled cultivation.
 
 ## Access And Money
 
