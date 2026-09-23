@@ -17,6 +17,25 @@ Run the project with three pieces:
 2. FastAPI backend
 3. Next.js frontend
 
+### Quick backend command on Linux
+
+Docker is only needed for PostgreSQL. Start the database once:
+
+```bash
+make db
+```
+
+Then run the backend directly on the host with one command:
+
+```bash
+make be
+```
+
+On the first run, `make be` creates `backend/.venv`, installs backend
+dependencies and copies `.env.example` to `.env`. Every run applies pending
+Alembic migrations before starting Uvicorn with reload. If `backend/.env`
+already exists, it is never overwritten.
+
 ### 1. PostgreSQL
 
 Use one of these setups.
