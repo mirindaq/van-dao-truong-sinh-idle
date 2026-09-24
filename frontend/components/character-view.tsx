@@ -17,7 +17,7 @@ export function CharacterView({ state, navigate }: { state: GameState; navigate:
     </section>
     <div className="feature-grid two">
       <section className="feature-panel"><div className="section-heading"><h2>Linh Căn</h2><Sparkles size={18} /></div><SpiritualRootBadge root={state.spiritual_root} /><StatRow label="Nguyên tố" value={state.spiritual_root.elements.map(e => elementNames[e] ?? e).join(" / ")} /><StatRow label="Tu luyện" value={`×${number(state.spiritual_root.cultivation_modifier, 2)}`} /><StatRow label="Đột phá" value={`×${number(state.spiritual_root.breakthrough_modifier, 2)}`} /></section>
-      <section className="feature-panel"><div className="section-heading"><h2>Công Pháp</h2><BookOpen size={18} /></div><div className="manual-card"><ScrollText size={28} /><div><strong>{manualName}</strong><span>Tâm pháp đang vận chuyển</span></div></div><p className="muted">Chỉ hiển thị công pháp backend đang lưu cho nhân vật.</p></section>
+      <section className="feature-panel"><div className="section-heading"><h2>Công Pháp</h2><BookOpen size={18} /></div><div className="manual-card"><ScrollText size={28} /><div><strong>{manualName}</strong><span>Tâm pháp đang vận chuyển</span></div></div><p className="muted">Một quyển tâm pháp bên mình, một đường tu hành phía trước.</p></section>
     </div>
   </div>;
 }
@@ -29,7 +29,7 @@ export function InventoryView({ state, navigate }: { state: GameState; navigate:
 
 export function SkillsView({ state, navigate }: { state: GameState; navigate: (view: string) => void }) {
   const manualName = manualNames[state.player.manual_key] ?? state.player.manual_key;
-  return <section className="collection-page"><div className="page-heading"><div><p className="eyebrow">ĐẠO PHÁP · TÂM QUYẾT</p><h1>Công Pháp</h1></div><span>Tâm pháp</span></div><div className="manual-detail"><div className="manual-emblem"><BookOpen size={42} /></div><div><RarityBadge /><h2>{manualName}</h2><p>Công pháp hiện đang được backend lưu cho nhân vật. Chưa có API học hoặc nâng cấp công pháp, nên màn này không sinh hành động giả.</p><StatRow label="Loại" value="Tâm pháp" /><StatRow label="Trạng thái" value="Đang vận chuyển" /></div></div><button className="secondary-button" onClick={() => navigate("cultivation")}><Sparkles size={17} />Quay lại tu luyện</button></section>;
+  return <section className="collection-page"><div className="page-heading"><div><p className="eyebrow">ĐẠO PHÁP · TÂM QUYẾT</p><h1>Công Pháp</h1></div><span>Tâm pháp</span></div><div className="manual-detail"><div className="manual-emblem"><BookOpen size={42} /></div><div><RarityBadge /><h2>{manualName}</h2><p>Cổ thư tìm được trong động phủ Thanh Vân. Từng trang ghi chép phép dưỡng khí, dẫn người phàm bước đầu vào tiên lộ.</p><StatRow label="Loại" value="Tâm pháp" /><StatRow label="Trạng thái" value="Đang vận chuyển" /><p className="muted">Hiện chưa thể học thêm hoặc nâng cấp công pháp.</p></div></div><button className="secondary-button" onClick={() => navigate("cultivation")}><Sparkles size={17} />Quay lại tu luyện</button></section>;
 }
 
 export function EquipmentView({ navigate }: { navigate: (view: string) => void }) {

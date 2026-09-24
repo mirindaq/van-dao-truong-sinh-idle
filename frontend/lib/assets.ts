@@ -13,7 +13,7 @@ const FALLBACKS: Record<string, string> = {
 };
 
 const ASSETS: Record<string, string> = {
-  "maps/qingyun_mountain": "/assets/maps/qingyun_mountain.png",
+  "maps/qingyun_mountain": "/assets/maps/qingyun-paper.png",
   "characters/player/default": "/assets/characters/player-default.png",
   "npc/xie_wuchen": "/assets/characters/xie-wuchen.png",
   "npc/luo_qinghan": "/assets/characters/luo-qinghan.png",

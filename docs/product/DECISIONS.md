@@ -33,3 +33,10 @@ Phase 7 entries are archived in decisions/phase-7-world-journeys.md.
 Phase 8 entries are archived in decisions/phase-8-spirit-pets.md.
 Phase 9 entries are archived in decisions/phase-9-alchemy.md.
 Phase 10 entries are archived in decisions/phase-10-partner-craft.md.
+
+## 2026-09-24 — design-overhaul — feature — Giao diện giấy tuyên sáng
+Decision: Chủ dự án chọn giấy ngà, chữ mực, ngọc trầm và son đỏ;
+điều hướng chia nhóm, tranh thủy mặc nguyên bản, Noto Serif cục bộ hỗ trợ tiếng Việt.
+Giữ luật, API, save và chức năng hiện có; sửa nhãn chưa mở sai trạng thái.
+Why: Các hệ thống cần cùng một phong cách, dễ đọc và dùng trên điện thoại.
+Recorded in: DESIGN.md — Ngôn ngữ hình ảnh, Bố cục, Kiểm chứng
