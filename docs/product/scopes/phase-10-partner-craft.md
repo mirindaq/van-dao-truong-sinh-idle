@@ -79,21 +79,21 @@ stateDiagram-v2
 
 ## Evidence
 Automated:
-- [ ] E-1: Dưới 8 thì không kết. Đủ 8 thì kết được từng người trong tám NPC.
-- [ ] E-2: Một người đang kết thì chiến lực cộng đúng một suất và tốc độ gồm đúng một hệ số, một lượng.
-- [ ] E-3: Hai người đang kết thì cộng hai suất. Gỡ một người thì còn đúng một suất.
-- [ ] E-4: Không có đạo lữ thì tốc độ trở về công thức linh thú. Đột phá không đổi.
-- [ ] E-5: Đọc được mẻ 6 ra 2. Đủ thảo thì trừ 6 cộng 2 một lần.
-- [ ] E-6: Cùng mã mẻ 6 không luyện lần hai. Thiếu thảo thì túi không đổi. Mẻ 3 vẫn chạy.
-- [ ] E-7: Reload và redeploy giữ đạo lữ và túi. Migration không tự kết, không tự luyện.
-- [ ] E-8: Regression, migration, lint, typecheck và build đều qua.
-- [ ] E-12: Save mới và cũ đều có đúng tám NPC; mở lại không nhân đôi năm NPC mới.
+- [x] E-1: Dưới 8 thì không kết. Đủ 8 thì kết được từng người trong tám NPC.
+- [x] E-2: Một người đang kết thì chiến lực cộng đúng một suất và tốc độ gồm đúng một hệ số, một lượng.
+- [x] E-3: Hai người đang kết thì cộng hai suất. Gỡ một người thì còn đúng một suất.
+- [x] E-4: Không có đạo lữ thì tốc độ trở về công thức linh thú. Đột phá không đổi.
+- [x] E-5: Đọc được mẻ 6 ra 2. Đủ thảo thì trừ 6 cộng 2 một lần.
+- [x] E-6: Cùng mã mẻ 6 không luyện lần hai. Thiếu thảo thì túi không đổi. Mẻ 3 vẫn chạy.
+- [x] E-7: Reload và redeploy giữ đạo lữ và túi. Migration không tự kết, không tự luyện.
+- [x] E-8: Regression, migration, lint, typecheck và build đều qua.
+- [x] E-12: Save mới và cũ đều có đúng tám NPC; mở lại không nhân đôi năm NPC mới.
 
 Manual, at close:
-- [ ] E-9: Kết một người, thấy tên và cả dòng chiến lực lẫn tốc độ. Kết thêm người thứ hai, bonus tăng.
-- [ ] E-10: Gỡ một người, reload: chỉ mất suất người đó.
-- [ ] E-11: Luyện mẻ 6. Desktop, mobile, 320px và bàn phím đọc được đạo lữ, giá và kết quả.
-- [ ] E-13: Thiên Hạ hiển thị năm chân dung nữ riêng biệt trên desktop và mobile, không ảnh nào rơi về fallback.
+- [x] E-9: Kết một người, thấy tên và cả dòng chiến lực lẫn tốc độ. Kết thêm người thứ hai, bonus tăng.
+- [x] E-10: Gỡ một người, reload: chỉ mất suất người đó.
+- [x] E-11: Luyện mẻ 6. Desktop, mobile, 320px và bàn phím đọc được đạo lữ, giá và kết quả.
+- [x] E-13: Thiên Hạ hiển thị năm chân dung nữ riêng biệt trên desktop và mobile, không ảnh nào rơi về fallback.
 
 ## Clarifications
 - 2026-09-23 round 1 — asked: ai thành đạo lữ, bonus, công thức thứ hai —
@@ -104,3 +104,12 @@ Manual, at close:
   save cũ phải nhận roster mới đúng một lần.
 
 ## Closed
+Hoàn tất 2026-09-24. Backend 137 test và Playwright 37 test pass; lint,
+typecheck và production build pass. Kiểm tay trên app thật với schema
+PostgreSQL tạm: Thiên Hạ hiện đủ tám NPC, tám chân dung đều tải ảnh riêng
+(1024px, không fallback). Diệp Thanh Trúc đạt 8 thiện cảm qua lời đáp ấm;
+kết Diệp Thanh Trúc rồi Hồng Liên: +3 → +6 chiến lực, tốc độ 1,49 → 1,665 →
+1,843. Gỡ Diệp Thanh Trúc, reload: còn một suất (+3, 1,665). Mẻ 6 thảo: thảo
+6 → 0, đan 3 → 5. 1440px, 390px và 320px không tràn ngang. Ghi chú ngoài
+scope: font Georgia của tiêu đề vẽ sai chữ "ầ" (Tạ Vô Trầ`n), có từ trước
+phase-10, chưa sửa. Review: Ready.
