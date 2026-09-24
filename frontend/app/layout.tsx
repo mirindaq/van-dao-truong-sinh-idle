@@ -1,6 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { MotionProvider } from "@/lib/motion";
 
 const literary = localFont({
   src: "../public/assets/fonts/noto-serif-regular.ttf",
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={literary.variable}>
-      <body>{children}</body>
+      <body><MotionProvider>{children}</MotionProvider></body>
     </html>
   );
 }

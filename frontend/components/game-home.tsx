@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState, ViewTransition } from "react";
 import { ArrowRight, Check, CloudOff, Flame, Leaf, LockKeyhole, Mountain, RefreshCw, Sparkles, X } from "lucide-react";
 import { gameApi, GameApiError } from "@/lib/api";
 import { assetPath } from "@/lib/assets";
 import { duration, number, percent } from "@/lib/format";
 import type { AlchemyRecipe, BreakthroughPreview, BreakthroughResult, DaoPartner, GameState, PetSpecies } from "@/lib/types";
+import { useMotionPreference } from "@/lib/motion";
 import { GameShell, destinations } from "./game-shell";
 import { GameModal, GameTimeline, SpiritualRootBadge, StatRow } from "./game-ui";
 import { CultivationView } from "./cultivation-view";
@@ -39,7 +40,7 @@ export function GameHome() {
   const [result, setResult] = useState<BreakthroughResult | null>(null);
   const [name, setName] = useState("");
   const [elapsed, setElapsed] = useState(0);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const { reduced: reducedMotion, setReduced: setReducedMotion } = useMotionPreference();
   const lock = useRef(false);
   const paused = useRef(false);
   const loadedAt = useRef(0);
@@ -52,6 +53,14 @@ export function GameHome() {
   const [usePill, setUsePill] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const previewSequence = useRef(0);
+
+  const reducedRef = useRef(reducedMotion);
+  useEffect(() => { reducedRef.current = reducedMotion; }, [reducedMotion]);
+  // ViewTransition only animates updates made inside a transition.
+  const showView = useCallback((id: string) => {
+    if (reducedRef.current) setView(id);
+    else startTransition(() => setView(id));
+  }, []);
 
   const acceptState = useCallback((next: GameState) => {
     setState(next); setNoSave(false); setDisconnected(false);
@@ -119,14 +128,12 @@ export function GameHome() {
     void execute("load", sync);
     const onHash = () => {
       const id = location.hash.slice(1);
-      setView(destinations.some(d => d.id === id) ? id : "home");
+      showView(destinations.some(d => d.id === id) ? id : "home");
     };
     onHash();
-    const setting = localStorage.getItem("reduce-motion") === "true";
-    setReducedMotion(setting); document.documentElement.dataset.reduceMotion = String(setting);
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
-  }, [execute, sync]);
+  }, [execute, sync, showView]);
 
   useEffect(() => { paused.current = modal !== null || Boolean(state?.offline_report) || noSave; }, [modal, state?.offline_report, noSave]);
   useEffect(() => {
@@ -152,7 +159,7 @@ export function GameHome() {
     return () => { clearInterval(poll); clearInterval(clock); document.removeEventListener("visibilitychange", refresh); window.removeEventListener("online", refresh); };
   }, [execute, sync]);
 
-  const navigate = (id: string) => { setView(id); if (location.hash !== `#${id}`) location.hash = id; window.scrollTo({ top: 0 }); };
+  const navigate = (id: string) => { showView(id); if (location.hash !== `#${id}`) location.hash = id; window.scrollTo({ top: 0 }); };
   const updateEquipment = (operation: () => Promise<GameState>) => void execute("equipment", async () => {
     if (equipmentUncertain) return;
     try { acceptState(await operation()); }
@@ -266,7 +273,7 @@ export function GameHome() {
     {equipmentUncertain && <div className="equipment-recovery" role="status"><p>Chưa xác nhận được thay đổi trang bị. Đồng bộ để xem trạng thái đã lưu trước khi thao tác tiếp.</p><button className="secondary-button" disabled={!!busy} onClick={() => void execute("sync", sync)}>Đồng bộ trang bị</button></div>}
     {disconnected && <p className="connection-note" role="status">Đang hiển thị lần lưu gần nhất. Tu vi sẽ được đồng bộ khi kết nối trở lại.</p>}
     {!modal && !offline && view !== "world" && worldState?.report && <section className="world-report" aria-label="Trong lúc bạn vắng mặt"><div><p className="eyebrow">TRONG LÚC BẠN VẮNG MẶT</p><h2>Thiên hạ đã chuyển mình</h2><WorldReportDetails report={worldState.report} /></div><div className="world-report-actions"><button className="secondary-button" onClick={() => navigate("world")}><ArrowRight size={16} />XEM THIÊN HẠ</button><button className="secondary-button" disabled={!!busy} onClick={() => acknowledgeWorld(worldState.report!.id)}><Check size={16} />ĐÃ ĐỌC</button></div></section>}
-    {view === "home" || view === "cultivation" ? <CultivationView state={state} detailed={view === "cultivation"} eta={eta} navigate={navigate} onBreakthrough={showPreview} busy={!!busy} /> : view === "exploration" ? <><ExplorationView state={state} result={explorationResult} journey={journey} busy={!!busy} elapsed={elapsed} onExplore={explore} onJourney={beginJourney} onClaim={claimJourney} />{explorationResult && <p className="center muted">Bộ luật v{explorationResult.rules_version} · {explorationResult.rules_fingerprint}</p>}</> : view === "world" ? <WorldView world={worldState} playerId={state.player.id} busy={!!busy} onSync={() => void execute("sync", sync)} onAcknowledge={acknowledgeWorld} onLoadMore={loadMoreWorld} /> : view === "character" ? <CharacterView state={state} navigate={navigate} /> : view === "inventory" ? <InventoryView state={state} navigate={navigate} onClaim={() => updateEquipment(gameApi.claimEquipment)} disabled={!!busy || equipmentUncertain} /> : view === "skills" ? <SkillsView state={state} navigate={navigate} /> : view === "equipment" ? <EquipmentView state={state} navigate={navigate} onEquip={equip} disabled={!!busy || equipmentUncertain} /> : view === "journal" ? <section className="journal-page"><div className="page-heading"><div><p className="eyebrow">DẤU CHÂN TRÊN TIÊN LỘ</p><h1>Nhật Ký</h1></div><span>Ghi chép gần đây</span></div><GameTimeline logs={state.recent_logs} /></section> : view === "pets" ? <PetsView state={state} species={species} busy={!!busy} onBond={bondPet} onRest={restPet} onRecall={recallPet} /> : view === "alchemy" ? <AlchemyView state={state} recipes={recipes} busy={!!busy} onCraft={craft} /> : view === "partner" ? <PartnerView state={state} partners={partners} busy={!!busy} onBond={bondPartner} onDismiss={dismissPartner} /> : <section className="locked-page" style={{ backgroundImage: `url(${assetPath("maps/qingyun_mountain")})` }}><selected.icon size={40} /><p className="eyebrow">TIÊN DUYÊN CHƯA TỚI</p><h1>{selected.name}</h1><span className="locked-tag"><LockKeyhole size={14} />Chưa mở</span><p>{view === "rift" ? "Sau màn sương, một cánh cửa cổ vẫn đang ngủ yên." : "Một chương mới trên tiên lộ vẫn còn đang khép lại."}</p><button className="secondary-button" onClick={() => navigate("cultivation")}><Leaf size={17} />Trở về tu luyện<ArrowRight size={16} /></button></section>}
+    <ViewTransition key={view} enter="page-in" exit="page-out" default="none"><div className="view-frame">{view === "home" || view === "cultivation" ? <CultivationView state={state} detailed={view === "cultivation"} eta={eta} navigate={navigate} onBreakthrough={showPreview} busy={!!busy} /> : view === "exploration" ? <><ExplorationView state={state} result={explorationResult} journey={journey} busy={!!busy} elapsed={elapsed} onExplore={explore} onJourney={beginJourney} onClaim={claimJourney} />{explorationResult && <p className="center muted">Bộ luật v{explorationResult.rules_version} · {explorationResult.rules_fingerprint}</p>}</> : view === "world" ? <WorldView world={worldState} playerId={state.player.id} busy={!!busy} onSync={() => void execute("sync", sync)} onAcknowledge={acknowledgeWorld} onLoadMore={loadMoreWorld} /> : view === "character" ? <CharacterView state={state} navigate={navigate} /> : view === "inventory" ? <InventoryView state={state} navigate={navigate} onClaim={() => updateEquipment(gameApi.claimEquipment)} disabled={!!busy || equipmentUncertain} /> : view === "skills" ? <SkillsView state={state} navigate={navigate} /> : view === "equipment" ? <EquipmentView state={state} navigate={navigate} onEquip={equip} disabled={!!busy || equipmentUncertain} /> : view === "journal" ? <section className="journal-page"><div className="page-heading"><div><p className="eyebrow">DẤU CHÂN TRÊN TIÊN LỘ</p><h1>Nhật Ký</h1></div><span>Ghi chép gần đây</span></div><GameTimeline logs={state.recent_logs} /></section> : view === "pets" ? <PetsView state={state} species={species} busy={!!busy} onBond={bondPet} onRest={restPet} onRecall={recallPet} /> : view === "alchemy" ? <AlchemyView state={state} recipes={recipes} busy={!!busy} onCraft={craft} /> : view === "partner" ? <PartnerView state={state} partners={partners} busy={!!busy} onBond={bondPartner} onDismiss={dismissPartner} /> : <section className="locked-page" style={{ backgroundImage: `url(${assetPath("maps/qingyun_mountain")})` }}><selected.icon size={40} /><p className="eyebrow">TIÊN DUYÊN CHƯA TỚI</p><h1>{selected.name}</h1><span className="locked-tag"><LockKeyhole size={14} />Chưa mở</span><p>{view === "rift" ? "Sau màn sương, một cánh cửa cổ vẫn đang ngủ yên." : "Một chương mới trên tiên lộ vẫn còn đang khép lại."}</p><button className="secondary-button" onClick={() => navigate("cultivation")}><Leaf size={17} />Trở về tu luyện<ArrowRight size={16} /></button></section>}</div></ViewTransition>
     {modal === "reveal" && <GameModal title="Trắc Linh Thạch"><div className="reveal-stone"><Leaf size={55} /></div><p className="center muted">Linh thạch khẽ sáng. Một luồng sinh khí lan tỏa.</p><SpiritualRootBadge root={state.spiritual_root} /><StatRow label="Hệ số tu luyện" value={`×${number(state.spiritual_root.cultivation_modifier, 2)}`} /><StatRow label="Hệ số đột phá" value={`×${number(state.spiritual_root.breakthrough_modifier, 2)}`} /><button className="primary-button full-width" onClick={() => { closeModal(); navigate("home"); }}>BƯỚC VÀO TIÊN LỘ<ArrowRight size={18} /></button></GameModal>}
     {modal === "breakthrough" && preview && <GameModal title={result ? result.success ? "Đột phá thành công" : "Đột phá thất bại" : "Đột phá cảnh giới"} onClose={closeModal} busy={!!busy}>
       {result ? <div className={`breakthrough-result ${result.success ? "success" : "failure"}`}>
@@ -294,7 +301,7 @@ export function GameHome() {
         <button className="primary-button full-width" disabled={!!busy || previewLoading || preview.quantity !== Number(usePill) || !preview.available || preview.quantity > preview.pills_owned} onClick={attempt}><Flame size={18} />{busy ? "ĐANG CHUẨN BỊ…" : "BẮT ĐẦU ĐỘT PHÁ"}</button>
       </>}{errorBanner}
     </GameModal>}
-    {modal === "settings" && <GameModal title="Cài đặt" onClose={closeModal}><label className="setting-row"><span>Giảm chuyển động</span><input type="checkbox" checked={reducedMotion} onChange={e => { setReducedMotion(e.target.checked); document.documentElement.dataset.reduceMotion = String(e.target.checked); localStorage.setItem("reduce-motion", String(e.target.checked)); }} /></label><StatRow label="Hành trình" value={disconnected ? "Chờ kết nối" : "Đã lưu"} /><StatRow label="Bộ luật" value={`v${state.rules_version} · ${state.rules_fingerprint}`} /><StatRow label="Lần đồng bộ" value={new Date(state.server_time).toLocaleTimeString("vi-VN")} /><button className="secondary-button full-width" disabled={!!busy} onClick={() => void execute("sync", sync)}><RefreshCw size={17} />Đồng bộ hành trình</button>{errorBanner}</GameModal>}
+    {modal === "settings" && <GameModal title="Cài đặt" onClose={closeModal}><label className="setting-row"><span>Giảm chuyển động</span><input type="checkbox" checked={reducedMotion} onChange={e => setReducedMotion(e.target.checked)} /></label><StatRow label="Hành trình" value={disconnected ? "Chờ kết nối" : "Đã lưu"} /><StatRow label="Bộ luật" value={`v${state.rules_version} · ${state.rules_fingerprint}`} /><StatRow label="Lần đồng bộ" value={new Date(state.server_time).toLocaleTimeString("vi-VN")} /><button className="secondary-button full-width" disabled={!!busy} onClick={() => void execute("sync", sync)}><RefreshCw size={17} />Đồng bộ hành trình</button>{errorBanner}</GameModal>}
     {!modal && offline && <GameModal title="Bế Quan Kết Thúc" busy={!!busy}><div className="offline-mark"><Mountain size={44} /></div><p className="center muted">Bạn đã bế quan {duration(offline.elapsed_seconds)}.</p><div className="offline-reward"><Sparkles size={24} /><strong>+{number(offline.earned_exp, 2)}</strong><span>Tu vi</span></div><p className="center muted">Đạo hạnh đã được ghi vào hành trình.</p><p className="center muted">Bộ luật v{offline.rules_version} · {offline.rules_fingerprint}</p><button className="primary-button full-width" disabled={!!busy} onClick={() => void execute("ack", async () => { await gameApi.acknowledgeOffline(offline.id); await sync(); })}><Check size={18} />{busy ? "ĐANG XÁC NHẬN…" : "NHẬN TU VI"}</button>{errorBanner}</GameModal>}
   </GameShell>;
 }

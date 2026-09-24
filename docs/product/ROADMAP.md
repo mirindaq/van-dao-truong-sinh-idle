@@ -17,6 +17,33 @@ before broader xianxia systems are added.
 | phase-8-spirit-pets | scopes/phase-8-spirit-pets.md | closed 2026-09-23 |
 | phase-9-alchemy | scopes/phase-9-alchemy.md | closed 2026-09-23 |
 | phase-10-partner-craft | scopes/phase-10-partner-craft.md | closed 2026-09-24 |
+| phase-11-game-feel | scopes/phase-11-game-feel.md | open |
+
+## phase-11-game-feel
+
+Outcome: the player opens a living cave abode where cultivation visibly flows,
+every system screen has a clear layout on phone and desktop, and each key
+moment (breakthrough, offline return, alchemy, equipping, affinity, exploration
+result) answers with a short, skippable effect.
+
+Risk retired: a richer, animated interface can ship without changing rules,
+API or saves, without breaking the 42 browser tests' roles and names, and
+without harming players who turn motion off.
+
+Not yet: sound and music, new art for every item, and new game systems stay
+unplaced; Bí Cảnh stays locked until a milestone opens it.
+
+Human decisions: settled 2026-09-24 — a separate milestone, and the `motion`
+library plus light particles on top of CSS, installed only at pinned, stable
+versions with no known vulnerability. Open: the layout direction for the
+home screen and the list of moments that get an effect, settled in the spec.
+
+Evidence: all 13 screens fit 320/390/768/1440px with no horizontal scroll; each
+key moment shows its effect and a static equivalent with reduced motion on
+(including view transitions and JS-driven motion); keyboard reaches every
+action; new packages are pinned and `npm audit` reports 0 vulnerabilities; lint,
+typecheck, build and the full browser suite pass; a manual pass
+on the real app covers an offline return and a breakthrough.
 
 ## Dropped
 
