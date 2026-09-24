@@ -22,11 +22,18 @@ export function markPlayed(kind: string, id: string | number) {
 
 const palette = ["#294c3e", "#5f8a74", "#a74735", "#c3a773", "#fcfaf4"];
 
-export async function burst(strength: "small" | "large" = "large") {
-  if (isReducedMotion() || document.hidden) return;
+type Confetti = typeof import("canvas-confetti");
+const launchers = new WeakMap<HTMLCanvasElement, ReturnType<Confetti["create"]>>();
+
+// Modals live in the browser's top layer, so particles draw on a canvas inside the
+// modal; drawing on the page would leave them under the backdrop.
+export async function burst(canvas: HTMLCanvasElement | null, strength: "small" | "large" = "large") {
+  if (!canvas || isReducedMotion() || document.hidden) return;
   try {
     const { default: confetti } = await import("canvas-confetti");
+    let fire = launchers.get(canvas);
+    if (!fire) { fire = confetti.create(canvas, { resize: true, disableForReducedMotion: true }); launchers.set(canvas, fire); }
     const count = strength === "large" ? 120 : 50;
-    await confetti({ particleCount: count, spread: 75, startVelocity: 32, gravity: .8, ticks: 160, scalar: .8, origin: { y: .55 }, colors: palette, disableForReducedMotion: true });
+    await fire({ particleCount: count, spread: 75, startVelocity: 32, gravity: .8, ticks: 160, scalar: .8, origin: { y: .55 }, colors: palette });
   } catch { /* particles are decoration; the moment still completes without them */ }
 }

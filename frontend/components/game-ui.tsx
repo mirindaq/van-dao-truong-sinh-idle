@@ -34,11 +34,11 @@ export function RarityBadge({ rarity = "unknown" }: { rarity?: string }) {
   return <span className={`rarity-badge rarity-${rarity}`}>{label[rarity] ?? rarity}</span>;
 }
 
-export function CultivationProgress({ cultivation }: { cultivation: GameState["cultivation"] }) {
-  const progress = Math.min(100, Math.max(0, cultivation.current_exp / cultivation.required_exp * 100));
+export function CultivationProgress({ cultivation, current = cultivation.current_exp }: { cultivation: GameState["cultivation"]; current?: number }) {
+  const progress = Math.min(100, Math.max(0, current / cultivation.required_exp * 100));
   return <div className="cultivation-progress">
-    <div className="progress-label"><span>Tu vi tích lũy</span><span><strong>{number(cultivation.current_exp, 1)}</strong><span className="muted"> / {number(cultivation.required_exp)}</span></span></div>
-    <div className="progress-track" role="progressbar" aria-label="Tu vi tích lũy" aria-valuemin={0} aria-valuemax={cultivation.required_exp} aria-valuenow={Math.min(cultivation.current_exp, cultivation.required_exp)} aria-valuetext={`${number(cultivation.current_exp, 1)} trên ${number(cultivation.required_exp)} tu vi`}><div style={{ width: `${progress}%` }} /></div>
+    <div className="progress-label"><span>Tu vi tích lũy</span><span><strong>{number(current, 1)}</strong><span className="muted"> / {number(cultivation.required_exp)}</span></span></div>
+    <div className="progress-track" role="progressbar" aria-label="Tu vi tích lũy" aria-valuemin={0} aria-valuemax={cultivation.required_exp} aria-valuenow={Math.min(current, cultivation.required_exp)} aria-valuetext={`${number(current, 1)} trên ${number(cultivation.required_exp)} tu vi`}><div style={{ width: `${progress}%` }} /></div>
   </div>;
 }
 

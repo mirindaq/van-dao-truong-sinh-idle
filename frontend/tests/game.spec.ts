@@ -57,7 +57,7 @@ test("offline report survives reload and acknowledgement is persistent", async (
   await page.reload();
   await expect(page.getByRole("dialog", { name: "Bế Quan Kết Thúc" })).toBeVisible();
   await expect(page.getByRole("dialog")).toContainText(/Bộ luật v\d+ · [0-9a-f]{16}/);
-  await page.getByRole("button", { name: "NHẬN TU VI" }).click();
+  await page.getByRole("button", { name: "XUẤT QUAN" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.reload();
   await expect(page.getByRole("heading", { name: "Động Phủ", exact: true })).toBeVisible();

@@ -97,6 +97,22 @@ svg { flex-shrink: 0; }
 .cultivator-art img { position: absolute; height: 280px; width: 220px; object-fit: contain; inset: 0 auto auto 50%; transform: translateX(-50%); z-index: 1; filter: drop-shadow(0 12px 10px #253c2f22); }
 .cultivation-circle { position: absolute; bottom: 14px; left: 10%; height: 65px; width: 80%; border: 1px solid #61765a66; border-radius: 50%; transform: perspective(300px) rotateX(40deg); }
 .cultivation-circle:before, .cultivation-circle:after { content: ""; position: absolute; inset: 7px; border: 1px dashed #61765a66; border-radius: 50%; }
+.cultivation-circle { animation: circle-breathe 7s ease-in-out infinite; }
+.cultivation-circle:before { animation: circle-turn 40s linear infinite; }
+@keyframes circle-breathe { 50% { border-color: #61765aaa; box-shadow: 0 0 26px #8fb39d44; } }
+@keyframes circle-turn { to { transform: rotate(360deg); } }
+.qi-motes { position: absolute; inset: 0; pointer-events: none; }
+.qi-motes span { position: absolute; bottom: 40px; width: 5px; height: 5px; border-radius: 50%; background: #8fb39d; box-shadow: 0 0 8px #8fb39dcc; opacity: 0; animation: qi-rise 6s ease-in infinite; }
+.qi-motes span:nth-child(1) { left: 22%; animation-delay: 0s; }
+.qi-motes span:nth-child(2) { left: 34%; animation-delay: 1.4s; animation-duration: 7s; }
+.qi-motes span:nth-child(3) { left: 46%; animation-delay: 2.6s; }
+.qi-motes span:nth-child(4) { left: 58%; animation-delay: .7s; animation-duration: 8s; background: #c3a773; box-shadow: 0 0 8px #c3a773cc; }
+.qi-motes span:nth-child(5) { left: 68%; animation-delay: 3.4s; }
+.qi-motes span:nth-child(6) { left: 78%; animation-delay: 4.3s; animation-duration: 7s; }
+.qi-motes span:nth-child(7) { left: 28%; animation-delay: 5.1s; animation-duration: 9s; }
+@keyframes qi-rise { 0% { opacity: 0; transform: translate(0, 0) scale(.6); } 20% { opacity: .9; } 100% { opacity: 0; transform: translate(12px, -300px) scale(1.1); } }
+.opportunity.ready { border-color: var(--jade); box-shadow: inset 0 3px 0 var(--jade); }
+.opportunity.ready > span { color: var(--jade); font-weight: 600; }
 .cultivation-circle:after { inset: 18px; border-style: solid; opacity: .5; }
 .scene-verse { font-family: var(--font-literary), "Times New Roman", serif; font-style: italic; line-height: 1.8; }
 .scene-progress { position: relative; padding: 10px 30px 23px; }
@@ -233,9 +249,24 @@ svg { flex-shrink: 0; }
 .breakthrough-result h3 { font-size: 23px; color: var(--gold-bright); }
 .breakthrough-result p { margin-top: 15px; color: var(--secondary); font-size: 13px; }
 .breakthrough-result.failure .probability-ring { color: var(--danger); border-color: var(--danger); }
-.breakthrough-result.success { animation: reward-reveal .7s ease-out; }
+.moment-canvas { position: fixed; inset: 0; width: 100vw; height: 100dvh; pointer-events: none; z-index: 2; }
+.ceremony { position: relative; display: grid; place-items: center; width: 100%; min-height: 250px; margin: 8px 0; border: 0; background: transparent; color: var(--jade); cursor: pointer; }
+.ceremony > * { grid-area: 1 / 1; }
+.ceremony-ring { width: 150px; height: 150px; border-radius: 50%; border: 1px solid currentColor; box-shadow: 0 0 0 7px #fcfaf4, 0 0 0 8px #b5c1aa; }
+.ceremony-ring.outer { width: 190px; height: 190px; box-shadow: 0 0 40px #5f8a7455; }
+.ceremony-core { width: 58px; height: 58px; border-radius: 50%; background: radial-gradient(circle, #fcfaf4 0 18%, #8fb39d 40%, #294c3e00 72%); }
+.ceremony-word { align-self: end; font-family: var(--font-literary), "Times New Roman", serif; font-size: 20px; color: var(--text); }
+.ceremony.failure { color: var(--danger); }
+.ceremony.failure .ceremony-ring.outer { box-shadow: 0 0 36px #a7473544; }
+.ceremony.failure .ceremony-core { background: radial-gradient(circle, #f5f2e9 0 15%, #c98a7c 42%, #a7473500 72%); }
+.ceremony:focus-visible { outline: 2px solid var(--jade); outline-offset: 4px; }
 .reveal-stone { width: 115px; height: 145px; clip-path: polygon(50% 0, 92% 30%, 80% 83%, 50% 100%, 20% 83%, 8% 30%); background: linear-gradient(145deg, #b0d4b8, #34624e 55%, #1d392f); display: grid; place-items: center; margin: 25px auto; color: var(--pearl); }
 .game-modal .center { margin: 18px 0; font-size: 13px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.seclusion-report { cursor: default; }
+.seclusion-events { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 8px; }
+.seclusion-events li { position: relative; padding-left: 16px; font-size: 13px; line-height: 1.5; color: var(--secondary); }
+.seclusion-events li::before { content: ""; position: absolute; left: 2px; top: .6em; width: 5px; height: 5px; transform: rotate(45deg); background: var(--jade); }
 .offline-mark { display: flex; justify-content: center; color: var(--gold); margin: 20px 0; }
 .offline-reward { display: flex; flex-direction: column; align-items: center; padding: 20px; border-block: 1px solid var(--line); color: var(--jade); gap: 6px; }
 .offline-reward strong { font-family: var(--font-literary), "Times New Roman", serif; font-size: 34px; }
