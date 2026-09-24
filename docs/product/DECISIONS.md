@@ -40,3 +40,14 @@ Decision: Chủ dự án chọn giấy ngà, chữ mực, ngọc trầm và son 
 Giữ luật, API, save và chức năng hiện có; sửa nhãn chưa mở sai trạng thái.
 Why: Các hệ thống cần cùng một phong cách, dễ đọc và dùng trên điện thoại.
 Recorded in: DESIGN.md — Ngôn ngữ hình ảnh, Bố cục, Kiểm chứng
+
+## 2026-09-24 — phase-11-game-feel — roadmap — Mở giai đoạn trùng tu cảm giác chơi
+Decision: Trùng tu layout, hiệu ứng và tương tác toàn bộ game thành giai đoạn riêng phase-11-game-feel, không đổi luật, API hay save.
+Why: Việc đụng cả 13 màn cần scope, danh sách kiểm chứng và một lần đóng rõ ràng.
+Recorded in: ROADMAP.md — phase-11-game-feel; scopes/phase-11-game-feel.md
+
+## 2026-09-25 — phase-11-game-feel — feature — Chuyển động, khoảnh khắc và cài đặt an toàn
+Decision: Dùng CSS + ViewTransition làm nền, thêm motion và canvas-confetti ghim bản đã ra ≥7 ngày kèm overrides cho gói con; Động Phủ dạng cảnh sống; hiệu ứng cho đột phá, xuất quan, đan, đồ, thám hiểm, thân mật, chuyển màn và modal; hạt chỉ cho đột phá thành công và xuất quan sau vắng lâu; mọi khoảnh khắc có bản tĩnh khi giảm chuyển động và chỉ phát một lần mỗi biên nhận. Nút "Xuất quan" luôn xác nhận, bấm vùng báo cáo để nhảy số; modal chỉ chuyển động lúc mở; Nhân Vật bỏ hai chỉ số trùng topbar.
+Why: Game cần cảm giác sống mà không làm chậm thao tác lặp, không hại người tắt chuyển động và không mở rủi ro chuỗi cung ứng.
+Recorded in: DESIGN.md — Chuyển động; scopes/phase-11-game-feel.md — Open decisions, flow, evidence
+

@@ -21,9 +21,12 @@ export function useLiveExp({ current, required, ratePerMinute }: Source, paused:
   useEffect(() => {
     const project = (now: number) => {
       const { value, at, from, blendAt } = anchor.current;
-      const target = Math.min(required, value + ratePerMinute / 60 * Math.max(0, now - at) / 1000);
+      // The server may already hold more than the stage needs (surplus carries over),
+      // so only the projected growth is capped, never the server's own value.
+      const cap = Math.max(required, value);
+      const target = Math.min(cap, value + ratePerMinute / 60 * Math.max(0, now - at) / 1000);
       const t = reduced ? 1 : Math.min(1, (now - blendAt) / BLEND_MS);
-      const next = Math.min(required, from + (target - from) * (1 - (1 - t) ** 2));
+      const next = Math.min(cap, from + (target - from) * (1 - (1 - t) ** 2));
       if (Math.abs(next - shownRef.current) < .002) return;
       shownRef.current = next; setShown(next);
     };

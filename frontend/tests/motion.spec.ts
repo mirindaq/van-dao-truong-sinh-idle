@@ -180,3 +180,55 @@ test("cave abode stops its ambient motion with reduced motion but still updates 
   await expect.poll(async () => Number(await bar.getAttribute("aria-valuenow")), { timeout: 4000 }).toBeGreaterThan(first);
   expect(await runningAnimations(page)).toBe(0);
 });
+
+test("reaching the bonding affinity lights its mark on the relationship meter", async ({ page }) => {
+  await page.goto("/#world");
+  await page.getByRole("button", { name: /Tạ Vô Trần/ }).click();
+  const relationship = page.getByLabel("Quan hệ với Tạ Vô Trần");
+  const meter = relationship.getByRole("meter", { name: "Thiện cảm với Tạ Vô Trần" });
+  await expect(meter).toHaveAttribute("aria-valuenow", "0");
+  await expect(relationship.locator(".affinity-meter")).not.toHaveClass(/reached/);
+  await relationship.getByRole("button", { name: "TRÒ CHUYỆN" }).click();
+  await relationship.getByRole("button", { name: "Một lòng không đổi." }).click();
+  await expect(meter).toHaveAttribute("aria-valuenow", "8");
+  await expect(relationship.locator(".affinity-meter")).toHaveClass(/reached/);
+  await expect(relationship).toContainText("Mốc mới");
+  await expect(relationship).toContainText("Đủ duyên kết đạo lữ");
+});
+
+test("cave abode never shows less cultivation than the server holds", async ({ page, request }) => {
+  await request.post(`${backend}/_test/prepare/success`);
+  const state = await (await request.get(`${backend}/game/state`)).json();
+  expect(state.cultivation.current_exp).toBeGreaterThan(state.cultivation.required_exp);
+  await page.goto("/");
+  const label = page.getByRole("region", { name: "Động phủ tu luyện" }).locator(".progress-label strong");
+  const shown = async () => Number((await label.innerText()).replace(/\./g, "").replace(",", "."));
+  await expect.poll(shown).toBeGreaterThanOrEqual(state.cultivation.current_exp);
+});
+
+test("content already on a screen does not slide in again on a revisit or reload", async ({ page }) => {
+  await page.goto("/#inventory");
+  await page.getByRole("button", { name: "NHẬN TRANG BỊ" }).click();
+  await page.evaluate(() => { location.hash = "equipment"; });
+  const weapon = page.getByRole("article", { name: "Vũ Khí" });
+  await weapon.getByRole("button", { name: /Mặc Thanh Trúc Kiếm/ }).click();
+  await expect(weapon.getByRole("button", { name: "Tháo Thanh Trúc Kiếm" })).toBeVisible();
+  const detailMoving = () => weapon.locator(".equipped-detail").evaluate(el => el.getAnimations({ subtree: true }).length > 0 || getComputedStyle(el).opacity !== "1");
+  await page.evaluate(() => { location.hash = "home"; });
+  await expect(page.getByRole("heading", { level: 1, name: "Động Phủ", exact: true })).toBeVisible();
+  await page.evaluate(() => { location.hash = "equipment"; });
+  await expect(weapon.locator(".equipped-detail")).toBeVisible();
+  expect(await detailMoving()).toBe(false);
+  await page.reload();
+  await expect(weapon.locator(".equipped-detail")).toBeVisible();
+  expect(await detailMoving()).toBe(false);
+});
+
+test("changing the inventory filter still slides the new list in", async ({ page }) => {
+  await page.goto("/#inventory");
+  await expect(page.getByRole("article", { name: "Tụ Khí Đan" })).toBeVisible();
+  await page.waitForTimeout(500);
+  await page.getByRole("button", { name: "Đan Dược", exact: true }).click();
+  const list = page.locator(".owned-inventory");
+  expect(await list.evaluate(el => Number(getComputedStyle(el).opacity) < 1 || el.style.transform !== "")).toBe(true);
+});

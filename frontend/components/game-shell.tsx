@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Mountain, Orbit, UserRound, BookOpen, Sword, Backpack, FlaskConical, PawPrint, Heart, Compass, Eclipse, Globe2, ScrollText, Settings, PanelLeftClose, PanelLeftOpen, Gem, MoreHorizontal, LockKeyhole, Check, RefreshCw } from "lucide-react";
 import type { GameState } from "@/lib/types";
 import { number } from "@/lib/format";
@@ -35,15 +35,22 @@ export function GameShell({ state, view, navigate, children, refreshing, disconn
   refreshing: boolean; disconnected: boolean; onRefresh: () => void; onSettings: () => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [animating, setAnimating] = useState(false);
+  const animationTimer = useRef(0);
+  const toggleSidebar = () => {
+    setAnimating(true); setCollapsed(value => !value);
+    clearTimeout(animationTimer.current);
+    animationTimer.current = window.setTimeout(() => setAnimating(false), 320);
+  };
   const [more, setMore] = useState(false);
   const current = destinations.find(d => d.id === view) ?? destinations[0];
   const link = (item: typeof destinations[number], mobile = false) => <a key={item.id} href={`#${item.id}`} onClick={() => { navigate(item.id); setMore(false); }} aria-current={view === item.id ? "page" : undefined} title={collapsed && !mobile ? item.name : undefined} className={`nav-link ${view === item.id ? "active" : ""}`}><item.icon size={19} /><span>{item.name}</span>{!mobile && !ready.has(item.id) && <LockKeyhole size={11} className="nav-lock" aria-label="Chưa mở" />}</a>;
-  return <div className={`game-shell ${collapsed ? "sidebar-collapsed" : ""}`}>
+  return <div className={`game-shell ${collapsed ? "sidebar-collapsed" : ""} ${animating ? "sidebar-animating" : ""}`}>
     <a className="skip-link" href="#main-content">Tới nội dung chính</a>
     <aside className="sidebar">
       <a href="#home" className="brand" onClick={() => navigate("home")} aria-label="Vạn Đạo Trường Sinh, Động Phủ"><div className="brand-seal" aria-hidden="true">Vạn<br />Đạo</div><span>Vạn Đạo<em>Trường Sinh</em><small>MỘT NIỆM TRƯỜNG SINH</small></span></a>
       <nav aria-label="Tiên lộ">{navigationGroups.map(group => <div className="nav-group" key={group.label}><div className="nav-caption">{group.label}</div>{group.ids.map(id => link(destinations.find(d => d.id === id)!))}</div>)}</nav>
-      <div className="sidebar-bottom"><div className="sidebar-player"><img src={assetPath("characters/player/default")} width={40} height={48} alt="" /><span><strong>{state.player.name}</strong><small>{state.realm.name} · Tầng {state.realm.stage}</small></span></div><div className="sidebar-controls"><button className="nav-link" onClick={onSettings} title="Cài đặt" aria-label="Cài đặt"><Settings size={17} /><span>Cài đặt</span></button><button className="icon-button collapse-button" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Mở thanh bên" : "Thu gọn thanh bên"} title={collapsed ? "Mở thanh bên" : "Thu gọn thanh bên"}>{collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}</button></div><div role="status" className={`save-status ${disconnected ? "offline" : ""}`}><Check size={13} /><span>{disconnected ? "Chờ kết nối" : "Hành trình đã lưu"}</span></div></div>
+      <div className="sidebar-bottom"><div className="sidebar-player"><img src={assetPath("characters/player/default")} width={40} height={48} alt="" /><span><strong>{state.player.name}</strong><small>{state.realm.name} · Tầng {state.realm.stage}</small></span></div><div className="sidebar-controls"><button className="nav-link" onClick={onSettings} title="Cài đặt" aria-label="Cài đặt"><Settings size={17} /><span>Cài đặt</span></button><button className="icon-button collapse-button" onClick={toggleSidebar} aria-label={collapsed ? "Mở thanh bên" : "Thu gọn thanh bên"} title={collapsed ? "Mở thanh bên" : "Thu gọn thanh bên"}>{collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}</button></div><div role="status" className={`save-status ${disconnected ? "offline" : ""}`}><Check size={13} /><span>{disconnected ? "Chờ kết nối" : "Hành trình đã lưu"}</span></div></div>
     </aside>
     <div className="game-body"><header className="topbar"><div className="breadcrumb"><Mountain size={16} /><span>Thanh Vân Sơn</span><span className="separator">/</span><strong>{current.name}</strong></div><div className="top-resources"><span title="Linh thạch"><Gem size={16} /><strong>{number(state.player.spirit_stones)}</strong><span className="resource-label">Linh thạch</span></span><span title="Chiến lực"><Sword size={16} /><strong>{number(state.player.combat_power)}</strong><span className="resource-label">Chiến lực</span></span><button className="icon-button" onClick={onRefresh} disabled={refreshing} title="Đồng bộ hành trình" aria-label="Đồng bộ hành trình"><RefreshCw size={16} className={refreshing ? "spin" : ""} /></button></div></header>
     <main id="main-content" tabIndex={-1}>{children}</main><footer className="game-footer"><span>Vạn Đạo Trường Sinh</span><span>{state.realm.name} · Tầng {state.realm.stage}</span><span>Tiên lộ còn dài.</span></footer></div>

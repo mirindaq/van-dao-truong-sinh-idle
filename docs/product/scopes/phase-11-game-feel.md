@@ -27,7 +27,8 @@ Nghiên cứu: `.ai/2026-09-24-game-feel-relayout/research.md` (đọc 2026-09-2
 ## The flow
 1. Người chơi mở game sau một thời gian vắng. Báo cáo offline hiện đầu tiên:
    thời gian vắng, tu vi nhận, sự kiện. Số chạy tới giá trị thật trong dưới 1s.
-   Bấm "Xuất quan" để đóng; bấm khi số đang chạy thì số nhảy thẳng tới cuối.
+   Bấm "Xuất quan" để đóng (luôn xác nhận ngay); bấm vào vùng báo cáo khi số
+   đang chạy thì số nhảy thẳng tới cuối.
 2. Động Phủ: cảnh giới, thanh tu vi và số tu vi tăng liên tục theo tốc độ hiện
    có, giữa hai lần đồng bộ. Một nút hành động chính. Không chỉ số nào lặp lại
    topbar.
@@ -79,6 +80,10 @@ cách trình bày kết quả đã được server xác nhận.
 | Máy yếu / tab ẩn | Tab ẩn thì dừng số chạy và hạt; hiện lại thì nhảy tới giá trị đúng |
 | Giảm chuyển động bật | Không `motion`, không hạt, không `::view-transition`; trạng thái cuối hiện ngay |
 | Gói hạt không tải được | Bỏ qua hạt, phần còn lại của nghi thức vẫn chạy |
+| Đổi cỡ màn hình qua mốc điện thoại | Bố cục đổi ngay, không trượt; chuyển động thanh bên chỉ chạy ngay sau khi bấm thu gọn |
+| Server giữ tu vi dư quá ngưỡng tầng | Động Phủ hiện đúng số server; chỉ phần chiếu tới bị chặn ở ngưỡng |
+| Vào lại một màn hoặc reload | Nội dung có sẵn hiện tĩnh, không trượt vào lần nữa |
+| Modal đóng | Đóng tức thì (chỉ chuyển động lúc mở) để không có hai hộp thoại cùng lúc |
 | 42 bài test hiện có | Giữ role/name của nút và heading; đổi cái nào thì sửa test trong cùng thay đổi và ghi lý do |
 
 ## Deferred
@@ -91,10 +96,11 @@ cách trình bày kết quả đã được server xác nhận.
 Automated:
 - [ ] E-1: Cả 13 màn ở 320/390/768/1440px: không cuộn ngang, ảnh tải đủ, không lỗi JS.
 - [ ] E-2: Đột phá thành công và thất bại: nghi thức hiện rồi kết quả đúng; Esc bỏ qua; kết quả giống trước.
-- [ ] E-3: Báo cáo offline: số cuối bằng số server; bấm khi đang chạy thì nhảy tới cuối; một nút đóng.
+- [ ] E-3: Báo cáo offline: số cuối bằng số server; bấm vùng báo cáo khi đang chạy thì nhảy tới cuối; một nút "Xuất quan".
 - [ ] E-4: Giảm chuyển động bật: không phần tử `motion` đang chạy, không canvas hạt, không `::view-transition`; trạng thái cuối hiện ngay.
 - [ ] E-5: Reload sau một kết quả đã chốt không phát lại hiệu ứng của biên nhận đó.
-- [ ] E-6: Bàn phím đến được mọi nút hành động và đóng mọi modal; focus nhìn thấy trên nền giấy.
+- [ ] E-6: Bàn phím đến được mọi nút hành động và đóng mọi modal; focus nhìn thấy trên nền giấy (≥2px, ≥3:1).
+- [ ] E-9: Mọi nút/link/input hiển thị ≥24×24px ở 320px trên cả 13 màn; mốc thân mật sáng khi đạt 8.
 - [ ] E-7: `npm audit` = 0 lỗ hổng; `motion` và `canvas-confetti` ghim đúng bản; lockfile đã commit.
 - [ ] E-8: lint, typecheck, build và toàn bộ bộ test trình duyệt qua.
 

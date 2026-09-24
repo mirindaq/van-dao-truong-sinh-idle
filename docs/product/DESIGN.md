@@ -23,9 +23,22 @@ Chủ dự án chọn giấy tuyên sáng, cổ phong thanh nhã ngày 2026-09-2
 - [Melvor Idle — hướng dẫn giao diện](https://wiki.melvoridle.com/index.php?title=Beginners_Guide): điều hướng, trạng thái và kỹ năng theo ngữ cảnh.
 - [W3C về tương phản](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) và [vùng tương tác](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html): căn cứ kiểm tra khả năng đọc và thao tác.
 
+## Chuyển động (phase-11, 2026-09-25)
+- Nền: CSS và `<ViewTransition>` của React (đổi màn phải nằm trong `startTransition`). Khoảnh khắc lớn dùng `motion` (LazyMotion + `m`) và `canvas-confetti` nạp động.
+- Gói ghim đúng bản đã ra ít nhất 7 ngày: `motion` 13.4.0, `canvas-confetti` 1.9.4, `@types/canvas-confetti` 1.9.0; `overrides` giữ `framer-motion` 13.4.0, `motion-dom` 13.3.0, `motion-utils` 13.3.0. Sau mỗi lần cài: `npm audit` = 0, `npm audit signatures` hợp lệ (npm ≥ 11; npm 10.2.5 báo sai về SLSA provenance v1).
+- Giảm chuyển động: mặc định theo hệ điều hành, đổi được trong Cài đặt. Khi bật: không animation/transition CSS (kể cả `::backdrop`, `::view-transition-*`), không đổi màn bằng transition, `motion` chạy thời lượng 0, không hạt; số hiện giá trị cuối ngay.
+- Khoảnh khắc: xuất quan (số chạy 900ms, bấm vùng báo cáo để nhảy tới cuối, hạt khi vắng ≥1 giờ), đột phá (nghi thức 1.4s, bấm hoặc Esc để bỏ qua; thành công ánh ngọc + hạt, thất bại vòng son, không hạt), luyện đan (tiến trình, "+N"), trang bị (đồ trượt vào, tổng chiến lực nhảy), thám hiểm (kết quả trượt vào), thân mật (mốc kết duyên sáng lên), chuyển màn và modal (chỉ lúc mở).
+- Mỗi khoảnh khắc phát một lần theo loại + mã biên nhận (`played-moments` trong trình duyệt); reload hiện trạng thái cuối.
+- Nội dung đã có sẵn khi mở một màn (vào lại, reload) hiện tĩnh; chỉ thứ đến sau khi màn đã mở mới trượt vào.
+- Hạt vẽ trên canvas bên trong modal, vì modal nằm ở top layer.
+- Động Phủ: tu vi chiếu tới giữa hai lần đồng bộ theo tốc độ server; phần chiếu tới dừng ở ngưỡng tầng, nhưng tu vi dư server đang giữ luôn hiện đủ; dừng khi có modal/báo cáo offline/tab ẩn; server vẫn là nguồn sự thật.
+- Chip "+N" chỉ để trang trí (ẩn khỏi cây truy cập), đặt ngoài ô số.
+- Vùng chạm ≥24×24px ở 320px; viền focus son 2px, lệch 2px.
+
 ## Kiểm chứng
 - `npm run lint`, `npm run typecheck`, `npm run build`, `npm test` trong frontend.
 - `tests/design.spec.ts`: cả 13 điểm đến ở 320/390/768/1440px, ảnh tải đủ, không lỗi JavaScript/tràn ngang; keyboard modal, reduced motion, link và sidebar thu gọn.
+- `tests/motion.spec.ts`: giảm chuyển động, chuyển màn, xuất quan, đột phá, Động Phủ sống, mốc thân mật; `design.spec` thêm vùng chạm và viền focus.
 - Chụp và xem trực tiếp desktop/mobile, màn Thiên Hạ, khởi đầu và modal; các bài hồi quy hiện có kiểm tra backend và save bằng schema thử riêng.
 
 ## Prompt tranh

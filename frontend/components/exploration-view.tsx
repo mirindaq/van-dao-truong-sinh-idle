@@ -3,6 +3,7 @@
 import { Clock, Compass, Gem, RefreshCw, ScrollText, Sparkles, Sword } from "lucide-react";
 import { number } from "@/lib/format";
 import type { Exploration, GameState } from "@/lib/types";
+import { Reveal } from "./moment-ui";
 
 const JOURNEYS = [
   { key: "hau_son", name: "Hậu Sơn", minutes: 5, reward: "Vân Linh Thảo", danger: "Thấp" },
@@ -44,7 +45,7 @@ export function ExplorationView({ state, result, journey, busy, elapsed, onExplo
         </article>;
       })}
     </div>
-    {result && <section className={`exploration-result ${result.state}`} aria-live="polite"><div><p className="eyebrow">KẾT QUẢ ĐÃ LƯU</p><h2>{result.state === "victory" ? "Cơ duyên trong rừng" : result.state === "defeat" ? "Dã thú quá mạnh" : "Sơn lâm lặng gió"}</h2><p>{result.message}</p></div><div className="exploration-rewards"><span><Gem size={17} /> +{number(result.reward_stones)} Linh Thạch</span><span><Sparkles size={17} /> +{number(result.reward_pills)} Tụ Khí Đan</span></div></section>}
+    {result && <Reveal id={result.request_id} className={`exploration-result ${result.state}`} aria-live="polite"><div><p className="eyebrow">KẾT QUẢ ĐÃ LƯU</p><h2>{result.state === "victory" ? "Cơ duyên trong rừng" : result.state === "defeat" ? "Dã thú quá mạnh" : "Sơn lâm lặng gió"}</h2><p>{result.message}</p></div><div className="exploration-rewards"><span><Gem size={17} /> +{number(result.reward_stones)} Linh Thạch</span><span><Sparkles size={17} /> +{number(result.reward_pills)} Tụ Khí Đan</span></div></Reveal>}
     {result?.battle_log.length ? <section className="battle-log"><div className="section-heading"><h2>Battle Log</h2><ScrollText size={18} /></div><ol>{result.battle_log.map((turn, index) => <li key={`${turn.turn}-${index}`}><strong>Lượt {turn.turn}</strong><span>{turn.actor} gây {number(turn.damage)} sát thương</span><small>Còn lại: {number(turn.target_hp)} HP</small></li>)}</ol></section> : result && <p className="muted exploration-empty">Không có trận chiến trong lượt này.</p>}
     {journey?.battle_log.length ? <section className="battle-log" aria-label="Nhật ký hành trình"><div className="section-heading"><h2>Nhật ký hành trình</h2><ScrollText size={18} /></div><ol>{journey.battle_log.map((turn, index) => <li key={`${turn.turn}-${index}`}><strong>Lượt {turn.turn}</strong><span>{turn.actor} gây {number(turn.damage)} sát thương</span><small>Còn lại: {number(turn.target_hp)} HP</small></li>)}</ol></section> : null}
     <p className="muted">Chiến lực hiện tại: {number(state.player.combat_power)} · Phần thưởng được lưu cùng lượt thám hiểm.</p>

@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+@property --sidebar { syntax: "<length>"; inherits: true; initial-value: 230px; }
 :root {
   color-scheme: light;
   --ink: #f5f2e9;
@@ -30,7 +31,7 @@ body { margin: 0; color: var(--text); background: var(--ink); background-image: 
 button, input { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button, a, input { outline-offset: 5px; }
-:focus-visible { outline: 2px solid var(--vermilion); }
+:focus-visible { outline: 2px solid var(--vermilion); outline-offset: 2px; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .55; }
 a { color: inherit; text-decoration: none; }
@@ -46,6 +47,8 @@ svg { flex-shrink: 0; }
 .eyebrow { color: var(--gold); font-size: 10px; font-weight: 600; letter-spacing: .13em; line-height: 1.7; }
 .full-width { width: 100%; }
 .game-shell { min-height: 100dvh; }
+/* Set only for a moment after the collapse toggle, so a viewport resize never slides the layout. */
+.game-shell.sidebar-animating { transition: --sidebar .28s cubic-bezier(.2, .7, .2, 1); }
 .sidebar { position: fixed; inset: 0 auto 0 0; width: var(--sidebar); padding: 30px 19px 18px; background: #efeee5; border-right: 1px solid var(--line); display: flex; flex-direction: column; z-index: 20; overflow-y: auto; scrollbar-width: thin; }
 .brand { display: flex; align-items: center; gap: 12px; padding: 0 2px 26px; color: var(--text); }
 .brand-seal { width: 39px; height: 49px; flex-shrink: 0; display: grid; align-content: center; text-align: center; border: 1px solid var(--vermilion); outline: 1px solid var(--vermilion); outline-offset: -4px; border-radius: 2px; background: var(--vermilion); color: var(--pearl); font-family: var(--font-literary), "Times New Roman", serif; font-size: 16px; line-height: 1.2; transform: rotate(-3deg); }
@@ -392,7 +395,7 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *:before, htm
 }
 /* Equipment ownership and slots */
 .equipment-summary { max-width: 560px; margin-bottom: 20px; }
-.equipment-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 24px 0; }
+.equipment-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 18px; margin: 24px 0; }
 .equipment-panel { min-width: 0; border: 1px solid var(--line); padding: 24px; background: var(--surface); border-radius: 3px; }
 .equipment-panel h2 { font-size: 23px; }
 .partner-art { width: 100%; height: 260px; object-fit: contain; margin: 12px 0 18px; background: radial-gradient(ellipse at 50% 65%, #dbe3cf, #f9f7ed 72%); border-bottom: 1px solid var(--line); }
@@ -436,7 +439,7 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *:before, htm
 .world-report p { color: var(--secondary); }
 .world-report small { display: block; color: var(--danger); margin-top: 7px; }
 .world-report-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.npc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-bottom: 34px; }
+.npc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 20px; margin-bottom: 34px; }
 .npc-card { min-width: 0; display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 16px; align-items: center; padding: 18px; border: 1px solid var(--line); border-radius: 3px; background: var(--surface); color: var(--text); text-align: left; transition: border-color .2s, background .2s; }
 .npc-card:hover { border-color: var(--gold); background: var(--surface-raised); }
 .npc-card img { width: 92px; height: 130px; object-fit: contain; background: linear-gradient(#f2f1e5, #e4e9dc); }
@@ -570,3 +573,55 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *:before, htm
   .top-resources { gap: 12px; }
   .world-filters { flex-wrap: wrap; }
 }
+
+.pop { display: inline-block; }
+.equipment-summary { position: relative; }
+.gain-chip { position: absolute; right: 0; top: -22px; padding: 2px 8px; white-space: nowrap; font-size: 12px; font-weight: 600; color: var(--jade); background: #e6ede2; border-radius: 2px; pointer-events: none; }
+.recipe-card { position: relative; overflow: hidden; }
+.recipe-flow { display: flex; align-items: center; gap: 8px; margin: -4px 0 16px; font-size: 12px; color: var(--secondary); }
+.recipe-fire { color: var(--gold); }
+.recipe-card.brewing .recipe-fire { animation: fire-flicker .5s ease-in-out infinite alternate; color: var(--danger); }
+@keyframes fire-flicker { to { transform: translateY(-2px) scale(1.15); opacity: .75; } }
+.brew-progress { height: 3px; margin: -8px 0 14px; background: var(--line); overflow: hidden; }
+.brew-progress span { display: block; height: 100%; width: 40%; background: var(--jade); animation: brew-slide 1s ease-in-out infinite; }
+@keyframes brew-slide { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+.equipment-panel { transition: border-color .3s ease, box-shadow .3s ease; }
+.equipment-panel.filled { border-color: #b5c1aa; box-shadow: inset 0 3px 0 #b5c1aa; }
+.empty-slot { display: flex; align-items: center; gap: 12px; margin: 18px 0; padding: 12px; border: 1px dashed #c9ccb8; color: #a9b49e; border-radius: 3px; }
+.empty-slot p { margin: 0; }
+.journey-card { transition: border-color .3s ease, transform .3s ease; }
+.journey-card:hover { border-color: #b5c1aa; transform: translateY(-2px); }
+@media (max-width: 600px) {
+  .equipment-grid.slots { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .equipment-grid.slots .equipment-panel { padding: 14px; }
+  .equipment-grid.slots .equipment-panel h2 { font-size: 18px; }
+  .equipment-grid.slots .empty-slot { margin: 10px 0; padding: 8px; gap: 8px; }
+  .equipment-grid.slots .equipped-detail { flex-direction: column; align-items: flex-start; margin: 10px 0; }
+  .equipment-grid.slots .equipment-choice { font-size: 12px; padding: 8px 10px; }
+}
+@media (max-width: 340px) { .equipment-grid.slots { grid-template-columns: 1fr; } }
+.affinity-meter { margin: 10px 0 18px; }
+.affinity-meter .affinity-track { position: relative; margin: 0; overflow: visible; }
+.affinity-meter .affinity-track > div { height: 100%; }
+.affinity-mark { position: absolute; top: -4px; width: 2px; height: 15px; background: var(--secondary); transform: translateX(-1px); }
+.affinity-mark::after { content: ""; position: absolute; top: -5px; left: -4px; width: 10px; height: 10px; transform: rotate(45deg); border: 1px solid var(--secondary); background: var(--surface); }
+.affinity-meter.reached .affinity-mark { background: var(--jade); }
+.affinity-meter.reached .affinity-mark::after { background: var(--jade); border-color: var(--jade); box-shadow: 0 0 10px #5f8a74aa; }
+.affinity-legend { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; font-size: 12px; color: var(--secondary); }
+.affinity-lit { color: var(--jade); font-weight: 600; }
+.affinity-row strong { position: relative; }
+.affinity-row .gain-chip { right: auto; left: 100%; top: 2px; margin-left: 10px; }
+.partner-card, .pet-card { transition: border-color .4s ease, box-shadow .4s ease; }
+.partner-card.bonded, .pet-card.bonded { border-color: var(--jade); box-shadow: inset 0 3px 0 var(--jade), 0 10px 30px #294c3e14; }
+.pet-card.resting { border-style: dashed; }
+.nav-link > svg:first-child { transition: transform .25s ease, color .25s ease; }
+.nav-link:hover > svg:first-child { transform: translateX(2px); }
+@media (max-width: 760px) { .mobile-nav .nav-link.active > svg:first-child { transform: translateY(-2px); color: var(--jade); } }
+.journal-page .timeline li { animation: reward-reveal .45s ease-out both; }
+.journal-page .timeline li:nth-child(2) { animation-delay: .05s; } .journal-page .timeline li:nth-child(3) { animation-delay: .1s; }
+.journal-page .timeline li:nth-child(4) { animation-delay: .15s; } .journal-page .timeline li:nth-child(5) { animation-delay: .2s; }
+.journal-page .timeline li:nth-child(n+6) { animation-delay: .25s; }
+.locked-page { background-size: 118%; animation: mist-drift 40s ease-in-out infinite alternate; }
+@keyframes mist-drift { from { background-position: 40% 50%; } to { background-position: 60% 45%; } }
+.manual-emblem { animation: emblem-breathe 6s ease-in-out infinite; }
+@keyframes emblem-breathe { 50% { box-shadow: 0 0 22px #c3a77333; } }

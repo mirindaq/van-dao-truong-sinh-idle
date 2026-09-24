@@ -4,7 +4,7 @@ import { Heart, Swords } from "lucide-react";
 import { assetPath } from "@/lib/assets";
 import { number } from "@/lib/format";
 import type { DaoPartner, GameState } from "@/lib/types";
-import { StatRow } from "./game-ui";
+import { AffinityMeter, BOND_AFFINITY, StatRow } from "./game-ui";
 
 export function PartnerView({ state, partners, busy, onBond, onDismiss }: {
   state: GameState;
@@ -24,14 +24,15 @@ export function PartnerView({ state, partners, busy, onBond, onDismiss }: {
       <StatRow label="Tốc độ tu vi" value={`+${number(state.cultivation.rate_per_minute, 3)}`} accent />
     </div>
     <p className="muted">Đạt 8 thiện cảm để kết duyên. Mỗi đạo lữ cộng riêng chiến lực và tốc độ tu vi.</p>
-    <div className="equipment-grid">{(partners ?? []).map(partner => <article className="equipment-panel" key={partner.npc_key} aria-label={partner.name}>
+    <div className="equipment-grid">{(partners ?? []).map(partner => <article className={`equipment-panel partner-card ${partner.active ? "bonded" : ""}`} key={partner.npc_key} aria-label={partner.name}>
       <div className="section-heading"><h2>{partner.name}</h2>{partner.active ? <Heart size={20} /> : <Swords size={20} />}</div>
       <img className="partner-art" src={assetPath(`npc/${partner.npc_key}`)} alt={`Chân dung ${partner.name}`} width={220} height={270} />
       <StatRow label="Thiện cảm" value={`${number(partner.affinity)} / 100`} />
-      <StatRow label="Trạng thái" value={partner.active ? "Đang kết duyên" : partner.affinity >= 8 ? "Có thể kết duyên" : "Chưa đủ duyên"} />
+      <AffinityMeter value={partner.affinity} label={`Thiện cảm với ${partner.name}`} />
+      <StatRow label="Trạng thái" value={partner.active ? "Đang kết duyên" : partner.affinity >= BOND_AFFINITY ? "Có thể kết duyên" : "Chưa đủ duyên"} />
       {partner.active
         ? <button className="secondary-button" disabled={busy} onClick={() => onDismiss(partner.npc_key)}>Gỡ duyên {partner.name}</button>
-        : <button className="primary-button" disabled={busy || partner.affinity < 8} onClick={() => onBond(partner.npc_key)}>Kết duyên {partner.name}</button>}
+        : <button className="primary-button" disabled={busy || partner.affinity < BOND_AFFINITY} onClick={() => onBond(partner.npc_key)}>Kết duyên {partner.name}</button>}
     </article>)}</div>
     {partners === null && <p role="status">Đang đọc nhân duyên…</p>}
   </section>;

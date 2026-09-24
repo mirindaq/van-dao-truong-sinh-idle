@@ -5,6 +5,7 @@ import { assetPath } from "@/lib/assets";
 import { number } from "@/lib/format";
 import type { GameState, PetSpecies } from "@/lib/types";
 import { StatRow } from "./game-ui";
+import { Pop, Reveal } from "./moment-ui";
 
 export function PetsView({ state, species, busy, onBond, onRest, onRecall }: {
   state: GameState;
@@ -19,13 +20,13 @@ export function PetsView({ state, species, busy, onBond, onRest, onRecall }: {
   return <section className="collection-page">
     <div className="page-heading"><div><p className="eyebrow">KẾT KHẾ ƯỚC</p><h1>Linh Thú</h1></div><span>{pet ? pet.name : "Chưa kết khế ước"}</span></div>
     <div className="equipment-summary">
-      <StatRow label="Từ linh thú" value={pet?.active ? `+${number(state.player.pet_bonus)}` : "+0"} />
+      <StatRow label="Từ linh thú" value={<Pop value={pet?.active ? state.player.pet_bonus : 0}>{pet?.active ? `+${number(state.player.pet_bonus)}` : "+0"}</Pop>} />
       <StatRow label="Tốc độ tu vi" value={`+${number(cult.rate_per_minute, 2)} / phút`} />
       <StatRow label="Hệ số linh thú" value={`×${number(cult.pet_factor, 2)}`} />
       <StatRow label="Lượng mỗi phút" value={`+${number(cult.pet_flat_per_minute, 2)}`} />
     </div>
-    <p className="muted">{pet?.active ? `${pet.name} đang theo.` : pet ? `${pet.name} đang nghỉ.` : "Chọn một trong ba loài. Mỗi save chỉ kết một lần."}</p>
-    <div className="equipment-grid">{(species ?? []).map(item => <article className="equipment-panel" key={item.key} aria-label={item.name}>
+    <Reveal id={`${pet?.key}-${pet?.active}`} className="muted pet-status">{pet?.active ? `${pet.name} đang theo.` : pet ? `${pet.name} đang nghỉ.` : "Chọn một trong ba loài. Mỗi save chỉ kết một lần."}</Reveal>
+    <div className="equipment-grid">{(species ?? []).map(item => <article className={`equipment-panel pet-card ${pet?.key === item.key ? (pet.active ? "bonded" : "resting") : ""}`} key={item.key} aria-label={item.name}>
       <div className="section-heading"><h2>{item.name}</h2><PawPrint size={20} /></div>
       <div className="equipped-detail"><img className="spirit-pet-art" src={assetPath(item.asset_key)} alt="" width={112} height={112} /><div><strong>+{number(item.combat_bonus)} chiến lực</strong><p>×{number(item.cultivation_factor, 2)} và +{number(item.cultivation_flat_per_minute, 2)} tu vi / phút</p></div></div>
       {pet?.key === item.key && pet.active && <button className="secondary-button" disabled={busy} onClick={onRest}>Cho nghỉ</button>}

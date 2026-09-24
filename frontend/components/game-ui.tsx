@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import * as m from "motion/react-m";
+import { useMotionPreference } from "@/lib/motion";
 import { Leaf, X } from "lucide-react";
 import type { GameState } from "@/lib/types";
 import { elementNames, number, qualityNames } from "@/lib/format";
@@ -45,4 +47,23 @@ export function CultivationProgress({ cultivation, current = cultivation.current
 export function GameTimeline({ logs }: { logs: GameState["recent_logs"] }) {
   if (!logs.length) return <p className="muted">Trang tiên ký đầu tiên còn đang chờ bạn viết.</p>;
   return <ol className="timeline">{logs.map(log => <li key={log.id}><time dateTime={log.created_at}>{new Date(log.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</time><p>{log.message}</p></li>)}</ol>;
+}
+
+export const BOND_AFFINITY = 8;
+
+// Affinity out of 100 with the bonding threshold marked; the mark is lit at or above it,
+// and "Mốc mới" appears only when the threshold is crossed while the meter is on screen.
+export function AffinityMeter({ value, label }: { value: number; label: string }) {
+  const { reduced } = useMotionPreference();
+  const [start] = useState(value);
+  const reached = value >= BOND_AFFINITY;
+  const crossed = reached && start < BOND_AFFINITY && !reduced;
+  const width = `${Math.min(100, Math.max(0, value))}%`;
+  return <div className={`affinity-meter ${reached ? "reached" : ""}`}>
+    <div className="affinity-track" role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={value}>
+      {reduced ? <div style={{ width }} /> : <m.div initial={{ width: `${Math.min(100, start)}%` }} animate={{ width }} transition={{ duration: .7, ease: [.2, .7, .2, 1] }} />}
+      <span className="affinity-mark" style={{ left: `${BOND_AFFINITY}%` }} aria-hidden="true" />
+    </div>
+    <div className="affinity-legend"><span>{reached ? "Đủ duyên kết đạo lữ" : `Còn ${BOND_AFFINITY - value} thiện cảm để đủ duyên`}</span>{crossed && <m.span className="affinity-lit" initial={{ opacity: 0, scale: .8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: .5, duration: .4 }}>Mốc mới</m.span>}</div>
+  </div>;
 }
