@@ -79,6 +79,16 @@ pg_hba.conf: allow your Windows host IP
 
 ### 2. Backend
 
+On Windows PowerShell, if the terminal is already inside `backend`, run both
+the migration and development server with one short command:
+
+```powershell
+cd backend
+.\be
+```
+
+Or run the equivalent steps manually in terminal 1:
+
 Open terminal 1:
 
 ```powershell
