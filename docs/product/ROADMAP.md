@@ -20,21 +20,23 @@ before broader xianxia systems are added.
 
 ## phase-10-partner-craft
 
-Outcome: the player can keep every reached dao partner, see their stacked
-bonus, and craft a second recipe without duplicating items.
+Outcome: the player can meet five additional female cultivators, build affinity
+with any of eight NPCs, keep every reached dao partner, see their stacked bonus,
+and craft a second recipe without duplicating items.
 
-Risk retired: several partners can affect play, and a second recipe can exist,
-without granting items twice or rewriting old receipts.
+Risk retired: a larger NPC roster and several partners can affect play, and a
+second recipe can exist, without losing old saves, granting items twice or
+rewriting old receipts.
 
 Not yet: gifts, quests, pet breeding and NPC trade stay unplaced.
 
 Human decisions: who can be the partner, what the bonus touches, and the
-second recipe. Settled 2026-09-23: any number of the three NPCs, both combat
-and cultivation, and a 6-herb batch.
+second recipe. Settled 2026-09-23: any number of eight NPCs including five new
+female cultivators, both combat and cultivation, and a 6-herb batch.
 
-Evidence: each partner persists across restart and that person's bonus is
-removed when the bond ends; the batch recipe commits its own cost and output
-once per request.
+Evidence: existing saves gain the five NPCs with distinct portraits; each
+partner persists across restart and that person's bonus is removed when the
+bond ends; the batch recipe commits its own cost and output once per request.
 
 ## Dropped
 

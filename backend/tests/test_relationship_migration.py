@@ -66,7 +66,7 @@ async def test_existing_save_upgrades_to_relationships_and_redeploy_is_idempoten
             ).scalar() == 1
             assert (
                 await connection.execute(text("SELECT count(*) FROM world_npcs"))
-            ).scalar() == 3
+            ).scalar() == 8
             assert (
                 await connection.execute(text("SELECT count(*) FROM npc_relationships"))
             ).scalar() == 1

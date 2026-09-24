@@ -207,7 +207,10 @@ class GameRules(BaseSettings):
             raise ValueError("GAME_STARTING_STAGE exceeds the starting realm max stage")
         if self.starting_root_key not in self.root_rules:
             raise ValueError("GAME_STARTING_ROOT_KEY must exist in GAME_ROOT_RULES")
-        required_npcs = {"xie_wuchen", "luo_qinghan", "wandering_cultivator"}
+        required_npcs = {
+            "xie_wuchen", "luo_qinghan", "wandering_cultivator", "ye_qingzhu",
+            "hong_lian", "bai_yue", "lei_ziyan", "yun_ruoli",
+        }
         if set(self.npc_rules) != required_npcs:
             raise ValueError("GAME_NPC_RULES must define all initial NPCs")
         npc_max_stage = self.realm_rules["qi_refining"].max_stage

@@ -20,7 +20,10 @@ def test_example_defines_every_gameplay_group_and_stable_fingerprint():
     assert first.fingerprint == second.fingerprint
     assert first.relationship_cooldown_hours == 12
     assert set(first.realm_rules) == {"mortal", "qi_refining", "foundation_establishment", "golden_core", "nascent_soul", "soul_formation", "void_refinement", "body_integration", "mahayana", "tribulation", "human_immortal"}
-    assert set(first.npc_rules) == {"xie_wuchen", "luo_qinghan", "wandering_cultivator"}
+    assert set(first.npc_rules) == {
+        "xie_wuchen", "luo_qinghan", "wandering_cultivator", "ye_qingzhu",
+        "hong_lian", "bai_yue", "lei_ziyan", "yun_ruoli",
+    }
     assert set(first.pet_rules) == {"thanh_xa", "hoa_ho", "van_tuoc"}
     assert set(first.alchemy_recipes) == {"recipe/qi_pill", "recipe/qi_pill_batch"}
 

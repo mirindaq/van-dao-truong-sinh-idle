@@ -39,3 +39,11 @@ kết cộng +3 chiến lực, ×1.05 và +0.1 tu vi/phút. Mẻ 6 thảo ra 2 �
 cùng mẻ 3 ra 1 và mỗi mã yêu cầu chỉ ghi một lần.
 Why: Bonus cần cộng và gỡ độc lập, còn công thức mới không được phá biên nhận cũ.
 Recorded in: PRODUCT.md — Core Objects, Source Of Truth, Product Rules
+
+## 2026-09-23 — phase-10-partner-craft — feature — Năm nữ NPC có chân dung riêng
+Decision: Thêm Diệp Thanh Trúc, Hồng Liên, Bạch Nguyệt, Lôi Tử Yên và Vân
+Nhược Ly; cả năm có hội thoại, thiện cảm, chân dung riêng và có thể kết đạo lữ
+ở ngưỡng 8. Save cũ nhận mỗi người đúng một lần.
+Why: Roster đạo lữ cần phong phú hơn mà không làm mất NPC, quan hệ hay duyên cũ.
+Recorded in: PRODUCT.md — Core Objects; ROADMAP.md — phase-10-partner-craft;
+scopes/phase-10-partner-craft.md — flow, entities, resilience, evidence

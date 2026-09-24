@@ -27,7 +27,7 @@ export function PetsView({ state, species, busy, onBond, onRest, onRecall }: {
     <p className="muted">{pet?.active ? `${pet.name} đang theo.` : pet ? `${pet.name} đang nghỉ.` : "Chọn một trong ba loài. Mỗi save chỉ kết một lần."}</p>
     <div className="equipment-grid">{(species ?? []).map(item => <article className="equipment-panel" key={item.key} aria-label={item.name}>
       <div className="section-heading"><h2>{item.name}</h2><PawPrint size={20} /></div>
-      <div className="equipped-detail"><img src={assetPath(item.asset_key)} alt="" width={48} height={48} /><div><strong>+{number(item.combat_bonus)} chiến lực</strong><p>×{number(item.cultivation_factor, 2)} và +{number(item.cultivation_flat_per_minute, 2)} tu vi / phút</p></div></div>
+      <div className="equipped-detail"><img className="spirit-pet-art" src={assetPath(item.asset_key)} alt="" width={112} height={112} /><div><strong>+{number(item.combat_bonus)} chiến lực</strong><p>×{number(item.cultivation_factor, 2)} và +{number(item.cultivation_flat_per_minute, 2)} tu vi / phút</p></div></div>
       {pet?.key === item.key && pet.active && <button className="secondary-button" disabled={busy} onClick={onRest}>Cho nghỉ</button>}
       {pet?.key === item.key && !pet.active && <button className="secondary-button" disabled={busy} onClick={onRecall}>Gọi lại</button>}
       {!pet && <button className="primary-button" disabled={busy} onClick={() => onBond(item.key)}>Kết khế ước {item.name}</button>}

@@ -12,9 +12,26 @@ const FALLBACKS: Record<string, string> = {
   ui: "/assets/ui/default-rune.svg"
 };
 
+const ASSETS: Record<string, string> = {
+  "maps/qingyun_mountain": "/assets/maps/qingyun_mountain.png",
+  "characters/player/default": "/assets/characters/player-default.png",
+  "npc/xie_wuchen": "/assets/characters/xie-wuchen.png",
+  "npc/luo_qinghan": "/assets/characters/luo-qinghan.png",
+  "npc/fallback": "/assets/characters/wandering-cultivator.png",
+  "npc/wandering_cultivator": "/assets/characters/wandering-cultivator.png",
+  "npc/ye_qingzhu": "/assets/characters/ye-qingzhu.png",
+  "npc/hong_lian": "/assets/characters/hong-lian.png",
+  "npc/bai_yue": "/assets/characters/bai-yue.png",
+  "npc/lei_ziyan": "/assets/characters/lei-ziyan.png",
+  "npc/yun_ruoli": "/assets/characters/yun-ruoli.png",
+  "pets/thanh_xa": "/assets/pets/thanh-xa.png",
+  "pets/hoa_ho": "/assets/pets/hoa-ho.png",
+  "pets/van_tuoc": "/assets/pets/van-tuoc.png"
+};
+
 export function assetPath(key: string): string {
   const [group] = key.split("/");
-  return FALLBACKS[group] ?? "/assets/ui/default-rune.svg";
+  return ASSETS[key] ?? FALLBACKS[group] ?? "/assets/ui/default-rune.svg";
 }
 
 export const resolveAsset = assetPath;

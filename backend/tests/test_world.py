@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 
 from app.core.game_rules import game_rules
 from app.models.world import WorldEvent, WorldNpc, WorldReport, WorldState
@@ -15,14 +15,37 @@ async def test_world_initializes_once_without_past_events(game):
     await client.post("/game/new", json={"name": "Quan Sơn"})
     first = (await client.get("/world/state")).json()
     second = (await client.get("/world/state")).json()
-    assert [npc["name"] for npc in first["npcs"]] == ["Tạ Vô Trần", "Lạc Thanh Hàn", "Tán Tu Vô Danh"]
+    assert [npc["name"] for npc in first["npcs"]] == [
+        "Tạ Vô Trần", "Lạc Thanh Hàn", "Tán Tu Vô Danh", "Diệp Thanh Trúc",
+        "Hồng Liên", "Bạch Nguyệt", "Lôi Tử Yên", "Vân Nhược Ly",
+    ]
     assert first["events"] == [] and first["report"] is None
     assert first["rules_version"] == game_rules.rules_version
     assert first["rules_fingerprint"] == game_rules.fingerprint
     assert second["updated_at"] == first["updated_at"]
     async with sessions() as session:
         assert await session.scalar(select(func.count()).select_from(WorldState)) == 1
-        assert await session.scalar(select(func.count()).select_from(WorldNpc)) == 3
+        assert await session.scalar(select(func.count()).select_from(WorldNpc)) == 8
+
+
+async def test_existing_world_backfills_new_npcs_once(game):
+    client, sessions = game
+    await client.post("/game/new", json={"name": "Quan Sơn"})
+    await client.get("/world/state")
+    new_keys = {"ye_qingzhu", "hong_lian", "bai_yue", "lei_ziyan", "yun_ruoli"}
+    async with sessions() as session:
+        original_ids = set((await session.scalars(
+            select(WorldNpc.id).where(WorldNpc.key.not_in(new_keys))
+        )).all())
+        await session.execute(delete(WorldNpc).where(WorldNpc.key.in_(new_keys)))
+        await session.commit()
+
+    first = (await client.get("/world/state")).json()
+    second = (await client.get("/world/state")).json()
+    assert len(first["npcs"]) == len(second["npcs"]) == 8
+    async with sessions() as session:
+        assert await session.scalar(select(func.count()).select_from(WorldNpc)) == 8
+        assert original_ids.issubset(set((await session.scalars(select(WorldNpc.id))).all()))
 
 
 async def test_world_rule_change_only_affects_future_ticks_and_keeps_old_report(game):
@@ -86,7 +109,7 @@ async def test_world_advances_once_concurrently_and_report_ack_is_idempotent(gam
     assert all(response.status_code == 200 for response in responses)
     assert states[0]["updated_at"] == states[1]["updated_at"]
     report = states[0]["report"] or states[1]["report"]
-    assert report["processed_ticks"] == 2 and report["npc_updates"] == 3
+    assert report["processed_ticks"] == 2 and report["npc_updates"] == 8
     for _ in range(2):
         assert (await client.post(f'/world/report/{report["id"]}/ack')).status_code == 204
     assert (await client.get("/world/state")).json()["report"] is None

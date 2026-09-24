@@ -4,6 +4,11 @@ PARTNERS = (
     ("luo_qinghan", "Lạc Thanh Hàn"),
     ("xie_wuchen", "Tạ Vô Trần"),
     ("wandering_cultivator", "Vị tán tu"),
+    ("ye_qingzhu", "Diệp Thanh Trúc"),
+    ("hong_lian", "Hồng Liên"),
+    ("bai_yue", "Bạch Nguyệt"),
+    ("lei_ziyan", "Lôi Tử Yên"),
+    ("yun_ruoli", "Vân Nhược Ly"),
 )
 
 

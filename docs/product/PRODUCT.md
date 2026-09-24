@@ -38,8 +38,10 @@ the world feel alive without click-heavy play.
   While active it adds its own combat-power amount and changes cultivation
   speed. NPC relationships, pending
   prompts and interaction receipts are saved per save.
-- Dao partner: one saved row per save and NPC. Any of the three existing NPCs
-  at affinity 8 may be active at once; dismissing one preserves every other row.
+- Dao partner: one saved row per save and NPC. Any of the eight existing NPCs
+  at affinity 8 may be active at once; this includes the five women Diệp Thanh
+  Trúc, Hồng Liên, Bạch Nguyệt, Lôi Tử Yên and Vân Nhược Ly. Dismissing one
+  preserves every other row.
 
 ## Source Of Truth
 

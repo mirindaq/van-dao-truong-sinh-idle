@@ -44,7 +44,7 @@ async def test_existing_schema_upgrades_and_redeploy_is_idempotent():
         start = datetime(2026, 9, 18, tzinfo=timezone.utc)
         async with sessions() as session:
             initial = await WorldService(session, now=start).get_state()
-            assert len(initial.npcs) == 3
+            assert len(initial.npcs) == 8
         async with sessions() as session:
             advanced = await WorldService(session, now=start + timedelta(hours=3)).get_state()
             assert advanced.report is not None and advanced.report.processed_ticks == 18
@@ -55,7 +55,7 @@ async def test_existing_schema_upgrades_and_redeploy_is_idempotent():
             assert (await connection.execute(text("SELECT version_num FROM alembic_version"))).scalar() == "20260923_0013"
             assert (await connection.execute(text("SELECT total_ticks FROM world_states"))).scalar() == 18
             assert (await connection.execute(text("SELECT rules_fingerprint FROM world_states"))).scalar() != "legacy"
-            assert (await connection.execute(text("SELECT count(*) FROM world_npcs"))).scalar() == 3
+            assert (await connection.execute(text("SELECT count(*) FROM world_npcs"))).scalar() == 8
             assert (await connection.execute(text("SELECT count(*) FROM world_reports"))).scalar() == 1
             assert (await connection.execute(text("SELECT rules_fingerprint FROM world_reports"))).scalar() != "legacy"
             assert (await connection.execute(text("SELECT count(*) FROM world_events"))).scalar() > 0

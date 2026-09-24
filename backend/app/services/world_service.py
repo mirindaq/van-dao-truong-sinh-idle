@@ -20,6 +20,16 @@ NPC_DEFINITIONS = (
          spiritual_root="Băng Linh Căn", portrait_key="npc/luo_qinghan"),
     dict(key="wandering_cultivator", name="Tán Tu Vô Danh", description="Một tán tu bình thường đang tìm chỗ đứng dưới chân núi.",
          spiritual_root="Thổ Linh Căn", portrait_key=None),
+    dict(key="ye_qingzhu", name="Diệp Thanh Trúc", description="Dược sư ôn hòa, am hiểu linh thảo và đạo dưỡng sinh.",
+         spiritual_root="Mộc Linh Căn", portrait_key="npc/ye_qingzhu"),
+    dict(key="hong_lian", name="Hồng Liên", description="Luyện đan sư nhiệt thành, tính tình thẳng thắn như hỏa diễm.",
+         spiritual_root="Hỏa Linh Căn", portrait_key="npc/hong_lian"),
+    dict(key="bai_yue", name="Bạch Nguyệt", description="Nữ tu điềm tĩnh, thường nghe tiếng nước để ngộ đạo.",
+         spiritual_root="Thủy Linh Căn", portrait_key="npc/bai_yue"),
+    dict(key="lei_ziyan", name="Lôi Tử Yên", description="Thương tu quyết đoán, mang lôi ý sắc bén trong từng bước chân.",
+         spiritual_root="Lôi Linh Căn", portrait_key="npc/lei_ziyan"),
+    dict(key="yun_ruoli", name="Vân Nhược Ly", description="Nữ tu tự do, theo gió du hành giữa các ngọn tiên sơn.",
+         spiritual_root="Phong Linh Căn", portrait_key="npc/yun_ruoli"),
 )
 
 
@@ -64,15 +74,21 @@ class WorldService:
         await self.session.commit()
 
     async def _ensure_world(self, player_id: int, now: datetime) -> WorldState:
-        world = await self.session.scalar(select(WorldState).where(WorldState.player_id == player_id))
-        if world is not None:
-            return world
-        world = WorldState(player_id=player_id, seed=self.rules.world_seed_base + player_id,
-                           rules_version=self.rules.rules_version, rules_fingerprint=self.rules.fingerprint,
-                           total_ticks=0, started_at=now, last_simulated_at=now)
-        self.session.add(world)
-        await self.session.flush()
+        world = await self.session.scalar(
+            select(WorldState).where(WorldState.player_id == player_id).with_for_update()
+        )
+        if world is None:
+            world = WorldState(player_id=player_id, seed=self.rules.world_seed_base + player_id,
+                               rules_version=self.rules.rules_version, rules_fingerprint=self.rules.fingerprint,
+                               total_ticks=0, started_at=now, last_simulated_at=now)
+            self.session.add(world)
+            await self.session.flush()
+        existing = set((await self.session.scalars(
+            select(WorldNpc.key).where(WorldNpc.world_id == world.id)
+        )).all())
         for definition in NPC_DEFINITIONS:
+            if definition["key"] in existing:
+                continue
             npc_rules = self.rules.npc_rules[definition["key"]]
             self.session.add(WorldNpc(
                 world_id=world.id,

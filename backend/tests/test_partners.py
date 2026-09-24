@@ -90,6 +90,21 @@ async def test_low_affinity_cannot_bond_and_eight_bonds_once(game):
     assert bonded["dao_partner"] == "Lạc Thanh Hàn"
 
 
+async def test_all_five_new_women_can_bond_at_eight_affinity(game):
+    client, sessions = game
+    await new_game(client)
+    expected_names = ["Diệp Thanh Trúc", "Hồng Liên", "Bạch Nguyệt", "Lôi Tử Yên", "Vân Nhược Ly"]
+    new_keys = ["ye_qingzhu", "hong_lian", "bai_yue", "lei_ziyan", "yun_ruoli"]
+    for index, npc_key in enumerate(new_keys, start=1):
+        await set_affinity(sessions, npc_key, 8)
+        state = (await client.post("/partners/bond", json={"npc_key": npc_key})).json()
+        assert state["player"]["partner_bonus"] == game_rules.dao_partner_combat * index
+    roster = (await client.get("/partners")).json()["partners"]
+    assert len(roster) == 8
+    assert [item["name"] for item in roster if item["npc_key"] in new_keys] == expected_names
+    assert all(item["active"] for item in roster if item["npc_key"] in new_keys)
+
+
 async def test_second_partner_stacks_and_dismiss_removes_only_that_share(game):
     client, sessions = game
     await new_game(client)

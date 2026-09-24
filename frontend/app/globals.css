@@ -354,8 +354,10 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *:before, htm
 .equipment-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 24px 0; }
 .equipment-panel { min-width: 0; border: 1px solid var(--border); padding: 22px; background: rgba(255,255,255,.02); }
 .equipment-panel h2 { font-size: 18px; }
+.partner-art { width: 100%; height: 230px; object-fit: contain; margin: 12px 0 18px; background: radial-gradient(circle at 50% 38%, #819c8324, #0b100f8c 72%); border-bottom: 1px solid var(--line); filter: drop-shadow(0 14px 20px #0009); }
 .equipped-detail { display: flex; align-items: center; gap: 12px; margin: 18px 0; }
 .equipped-detail p { color: var(--gold); margin: 6px 0 0; }
+.spirit-pet-art { width: 112px; height: 112px; flex: 0 0 112px; object-fit: contain; filter: drop-shadow(0 12px 18px #0009); }
 .equipment-choice { width: 100%; margin-top: 14px; white-space: normal; text-align: left; }
 .equipment-choice span { margin-left: auto; }
 .equipment-pack, .equipment-recovery { display: flex; align-items: center; justify-content: space-between; gap: 22px; padding: 22px; margin: 20px 0; border: 1px solid var(--border); }

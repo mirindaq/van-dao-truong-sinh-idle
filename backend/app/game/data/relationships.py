@@ -53,6 +53,56 @@ PROMPTS = {
             DialogueChoice("fortune", "Chỉ có cơ duyên quyết định.", "Vị tán tu thở dài: “Có lẽ đạo hữu chưa từng thiếu đường lui.”", -3),
         ),
     ),
+    "ye_qingzhu": DialoguePrompt(
+        key="ye_qingzhu_gentle_remedy",
+        version=1,
+        text="Diệp Thanh Trúc nâng một nhánh linh thảo: “Thuốc cứu người quý ở dược lực hay tấm lòng?”",
+        choices=(
+            DialogueChoice("heart", "Tấm lòng đặt người bệnh lên trước.", "Nàng mỉm cười: “Đạo hữu hiểu điều quan trọng nhất của y đạo.”", 8),
+            DialogueChoice("balance", "Cả hai phải cân bằng.", "Nàng gật đầu, cẩn thận cất nhánh linh thảo đi.", 5),
+            DialogueChoice("power", "Dược lực đủ mạnh là được.", "Diệp Thanh Trúc khẽ lắc đầu: “Thuốc mạnh mà dùng sai cũng thành độc.”", -3),
+        ),
+    ),
+    "hong_lian": DialoguePrompt(
+        key="hong_lian_alchemy_flame",
+        version=1,
+        text="Hồng Liên nhìn lửa trong đan lô: “Khi một mẻ đan sắp hỏng, đạo hữu sẽ làm gì?”",
+        choices=(
+            DialogueChoice("stay", "Ở lại cùng nàng cứu mẻ đan.", "Ánh lửa phản chiếu nụ cười rực rỡ của nàng.", 8),
+            DialogueChoice("observe", "Bình tâm tìm nguyên nhân.", "Nàng khoanh tay: “Ít nhất đạo hữu không hoảng loạn.”", 5),
+            DialogueChoice("leave", "Bỏ lò, giữ lấy linh dược còn lại.", "Hồng Liên hừ nhẹ: “Chưa cháy hết đã muốn chạy rồi sao?”", -4),
+        ),
+    ),
+    "bai_yue": DialoguePrompt(
+        key="bai_yue_still_water",
+        version=1,
+        text="Bạch Nguyệt hỏi bên dòng suối: “Nước mềm yếu, vì sao vẫn xuyên được đá?”",
+        choices=(
+            DialogueChoice("endure", "Vì kiên trì không ngừng nghỉ.", "Nàng nhìn bạn thật lâu rồi khẽ mỉm cười.", 8),
+            DialogueChoice("adapt", "Vì biết thuận theo địa thế.", "Bạch Nguyệt gật đầu: “Biết biến đổi cũng là một loại đạo.”", 5),
+            DialogueChoice("force", "Chỉ cần dòng đủ mạnh.", "Mặt nước trước nàng gợn lên rồi nhanh chóng lặng xuống.", -3),
+        ),
+    ),
+    "lei_ziyan": DialoguePrompt(
+        key="lei_ziyan_thunder_oath",
+        version=1,
+        text="Lôi Tử Yên chống trường thương: “Nếu thiên kiếp giáng xuống, đạo hữu sẽ đứng ở đâu?”",
+        choices=(
+            DialogueChoice("beside", "Đứng bên cạnh nàng.", "Nàng bật cười: “Vậy đừng để ta phải chờ.”", 8),
+            DialogueChoice("front", "Đứng phía trước che chắn.", "Nàng nhướng mày, nhưng ánh mắt đã bớt sắc lạnh.", 5),
+            DialogueChoice("away", "Tìm nơi an toàn quan sát.", "Lôi Tử Yên xoay thương: “Kẻ sợ sấm khó đi cùng ta.”", -4),
+        ),
+    ),
+    "yun_ruoli": DialoguePrompt(
+        key="yun_ruoli_free_wind",
+        version=1,
+        text="Vân Nhược Ly nhìn mây trôi: “Nếu không còn con đường nào trên bản đồ, đạo hữu sẽ đi đâu?”",
+        choices=(
+            DialogueChoice("together", "Cùng nàng tìm một con đường mới.", "Nàng đưa tay đón gió: “Vậy chuyến đi này sẽ không cô độc.”", 8),
+            DialogueChoice("home", "Quay về chuẩn bị kỹ hơn.", "Nàng cười nhẹ: “Cẩn trọng cũng không phải điều xấu.”", 5),
+            DialogueChoice("wait", "Đợi người khác mở đường.", "Vân Nhược Ly quay đi: “Gió không chờ người do dự.”", -3),
+        ),
+    ),
 }
 
 
@@ -81,4 +131,3 @@ def address_for(affinity: int) -> str:
     if affinity >= 30:
         return "Bằng hữu"
     return "Đạo hữu"
-

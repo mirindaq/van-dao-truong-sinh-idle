@@ -50,6 +50,26 @@ async def test_relationship_happy_path_persists_prompt_receipt_and_profile(game)
         assert await session.scalar(select(func.count()).select_from(NpcInteractionReceipt)) == 1
 
 
+@pytest.mark.parametrize("npc_key", [
+    "ye_qingzhu", "hong_lian", "bai_yue", "lei_ziyan", "yun_ruoli",
+])
+async def test_new_female_npc_warm_choice_reaches_partner_affinity(npc_key, game):
+    client, _ = game
+    await client.post("/game/new", json={"name": "Quan Sơn"})
+    prompted = (await client.post(f"/relationships/npcs/{npc_key}/prompt")).json()
+    response = await client.post(
+        f"/relationships/npcs/{npc_key}/interactions",
+        json={
+            "request_id": str(uuid4()),
+            "prompt_key": prompted["prompt"]["key"],
+            "prompt_version": prompted["prompt"]["version"],
+            "choice_key": prompted["prompt"]["choices"][0]["key"],
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["profile"]["affinity"] == game_rules.dao_partner_affinity
+
+
 async def test_relationship_request_replay_and_conflict(game):
     client, _ = game
     await client.post("/game/new", json={"name": "Quan Sơn"})
